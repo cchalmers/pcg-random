@@ -75,7 +75,7 @@ instance Storable Seed where
 
 -- | State of the random number generator
 newtype Gen s = Gen (Ptr Seed)
-type role Gen nominal
+type role Gen representational
 
 -- this should be type safe because the Gen cannot escape its PrimMonad
 
