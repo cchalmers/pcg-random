@@ -1,0 +1,20 @@
+name:           random-benchmarks
+version:        0
+synopsis:       Benchmarks for the pcg-random package
+description:    Benchmarks for the pcg-random package
+license:        BSD3
+license-file:   ../LICENSE
+build-type:     Simple
+cabal-version:  >= 1.6
+
+executable bm
+  main-is: Benchmark.hs
+  Ghc-Options: -O2
+
+  build-depends:
+    base < 5,
+    criterion,
+    mersenne-random,
+    mwc-random,
+    pcg-random,
+    random
