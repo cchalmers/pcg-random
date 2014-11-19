@@ -16,6 +16,19 @@
 -- http://www.pcg-random.org
 --
 -- Interface based on mwc-random.
+--
+-- @
+-- import Control.Monad.ST
+-- import System.Random.PCG
+--
+-- three :: [Word32]
+-- three = runST $ do
+--   g <- create
+--   a <- uniformB 10 g
+--   b <- uniformB 20 g
+--   c <- uniformB 30 g
+--   return [a,b,c]
+-- @
 
 module System.Random.PCG
   ( -- * Gen
