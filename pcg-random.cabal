@@ -13,6 +13,7 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     System.Random.PCG
+  hs-source-dirs:      src
   other-extensions:    BangPatterns, CPP, ForeignFunctionInterface, RoleAnnotations
   build-depends:       base >=4.7 && <4.8,
                        primitive >=0.5 && <0.6
