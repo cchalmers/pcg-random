@@ -39,7 +39,7 @@ module System.Random.PCG
   , uniform, uniformB, uniformR
 
     -- * Seeds
-  , Seed, save, restore, seed
+  , Seed, save, restore, seed, uniforms
   , next1, next2, split, mkSeed
   ) where
 
@@ -93,6 +93,15 @@ next2 s = unsafePerformIO $ do
   free p
   return (w1,w2,s')
 {-# INLINE next2 #-}
+
+-- | Produce an infinite stream of random words using the given seed.
+uniforms :: Seed -> [Word32]
+uniforms s = map unsafePerformIO $ repeat (pcg32_random_r pointer)
+  where
+    pointer = unsafePerformIO $ do
+      p <- malloc
+      poke p s
+      return p
 
 -- | Split a 'Seed' into two different seeds. The robustness of this
 --   split is untested.
