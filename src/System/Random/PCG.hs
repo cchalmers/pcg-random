@@ -39,7 +39,8 @@ module System.Random.PCG
   , uniform, uniformB, uniformR
 
     -- * Seeds
-  , Seed, save, restore
+  , Seed, save, restore, seed
+  , next1, next2, split, mkSeed
   ) where
 
 import Control.Applicative
@@ -47,6 +48,7 @@ import Control.Monad
 import Control.Monad.Primitive
 import Control.Monad.ST
 import Foreign
+import System.IO.Unsafe
 
 ------------------------------------------------------------------------
 -- State
@@ -68,6 +70,63 @@ restore s = unsafePrimToPrim $ do
   poke p s
   return (Gen p)
 {-# INLINE restore #-}
+
+-- | Given a 'Seed', return a uniform 'Word32' with a new 'Seed'.
+next1 :: Seed -> (Word32, Seed)
+next1 s = unsafePerformIO $ do
+  p  <- malloc
+  poke p s
+  w  <- pcg32_random_r p
+  s' <- peek p
+  free p
+  return (w,s')
+{-# INLINE next1 #-}
+
+-- | Given a 'Seed', return two uniform 'Word32's with a new 'Seed'.
+next2 :: Seed -> (Word32, Word32, Seed)
+next2 s = unsafePerformIO $ do
+  p  <- malloc
+  poke p s
+  w1 <- pcg32_random_r p
+  w2 <- pcg32_random_r p
+  s' <- peek p
+  free p
+  return (w1,w2,s')
+{-# INLINE next2 #-}
+
+-- | Split a 'Seed' into two different seeds. The robustness of this
+--   split is untested.
+split :: Seed -> (Seed, Seed)
+split s = unsafePerformIO $ do
+  p  <- malloc
+  poke p s
+  w1 <- pcg32_random_r p
+  w2 <- pcg32_random_r p
+  w3 <- pcg32_random_r p
+  w4 <- pcg32_random_r p
+  w5 <- pcg32_random_r p
+  w6 <- pcg32_random_r p
+  w7 <- pcg32_random_r p
+  w8 <- pcg32_random_r p
+  pcg32_srandom_r p (com w1 w2) (com w3 w4)
+  s1 <- peek p
+  pcg32_srandom_r p (com w5 w6) (com w7 w8)
+  s2 <- peek p
+  free p
+  return (s1,s2)
+
+com :: Word32 -> Word32 -> Word64
+com w1 w2 = fromIntegral w1 + fromIntegral w2
+{-# INLINE com #-}
+
+-- | Generate a new seed using two 'Word64's. Note: the words in the show
+--   instance of the Seed will not be the same as the words given.
+mkSeed :: Word64 -> Word64 -> Seed
+mkSeed w1 w2 = unsafePerformIO $ do
+  p <- malloc
+  pcg32_srandom_r p w1 w2
+  peek p <* free p
+{-# INLINE mkSeed #-}
 
 -- pcg internals are ment to be private but it looks like this works
 instance Storable Seed where
