@@ -12,7 +12,10 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     System.Random.PCG
+  exposed-modules:     System.Random.PCG,
+                       System.Random.PCG.Fast,
+                       System.Random.PCG.Unique,
+                       System.Random.PCG.Single
   hs-source-dirs:      src
   other-extensions:    BangPatterns, CPP, ForeignFunctionInterface, RoleAnnotations
   build-depends:       base >=4.7 && <4.8,
@@ -20,13 +23,14 @@ library
   default-language:    Haskell2010
   cc-options:
     -DMEXP=19937
-    -DNDEBUG 
+    -DNDEBUG
     -O3 -finline-functions -fomit-frame-pointer
     -fno-strict-aliasing
 
-  ghc-options:     -Wall -O2 -fexcess-precision
+  ghc-options:     -Wall -O2
 
-  c-sources:        pcg-c-basic-0.9/pcg_basic.c
+  c-sources:        c/pcg-advance-128.c c/pcg-advance-16.c c/pcg-advance-32.c c/pcg-advance-64.c c/pcg-advance-8.c c/pcg-global-32.c c/pcg-global-64.c c/pcg-output-128.c c/pcg-output-16.c c/pcg-output-32.c c/pcg-output-64.c c/pcg-output-8.c c/pcg-rngs-128.c c/pcg-rngs-16.c c/pcg-rngs-32.c c/pcg-rngs-64.c
+c/pcg-rngs-8.c
   include-dirs:     include
-  includes:         pcg_basic.h
-  install-includes: pcg_basic.h
+  includes:         pcg_variants.h
+  install-includes: pcg_variants.h

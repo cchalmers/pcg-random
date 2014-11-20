@@ -12,10 +12,8 @@
 -- Portability: CPP, FFI
 -- Tested with: GHC 7.8.3
 --
--- Minimal iterface to the PCG Random Number Generator. See
--- http://www.pcg-random.org
---
--- Interface based on mwc-random.
+-- Standard PCG Random Number Generator with chosen streams. See
+-- http://www.pcg-random.org for details.
 --
 -- @
 -- import Control.Monad.ST
@@ -36,7 +34,7 @@ module System.Random.PCG
   , create, initialize
 
     -- * Getting random numbers
-  , uniform, uniformB, uniformR
+  , uniform, uniformB, uniformR, advance
 
     -- * Seeds
   , Seed, save, restore, seed, uniforms
@@ -46,7 +44,6 @@ module System.Random.PCG
 import Control.Applicative
 import Control.Monad
 import Control.Monad.Primitive
-import Control.Monad.ST
 import Foreign
 import System.IO.Unsafe
 
@@ -161,10 +158,20 @@ type role Gen representational
 -- this should be type safe because the Gen cannot escape its PrimMonad
 
 -- | Type alias of 'Gen' specialized to 'IO'.
-type IOGen   = Gen (PrimState IO)
+type IOGen   = Gen RealWorld
 
--- | Type alias of 'Gen' specialized to 'ST'.
-type STGen s = Gen (PrimState (ST s))
+-- | Type alias of 'Gen' specialized to 'ST'. (
+type STGen s = Gen s
+-- Note this doesn't force it to be in ST. You can write (STGen Realworld)
+-- and it'll work in IO. Writing STGen s = Gen (PrimState (ST s)) doesn't
+-- solve this.
+
+-- | Create a 'Gen' from a fixed initial seed.
+create :: PrimMonad m => m (Gen (PrimState m))
+create = restore seed
+
+seed :: Seed
+seed = Seed 0x853c49e6748fea9b 0xda3e39cb94b95bdb
 
 -- | Create a generator from two words. Note: this is not the same as the
 --   two words in a 'Seed'.
@@ -173,13 +180,6 @@ initialize a b = unsafePrimToPrim $ do
   p <- malloc
   pcg32_srandom_r p a b
   return (Gen p)
-
--- | Create a 'Gen' from a fixed initial seed.
-create :: PrimMonad m => m (Gen (PrimState m))
-create = restore seed
-
-seed :: Seed
-seed = Seed 0x853c49e6748fea9b 0xda3e39cb94b95bdb
 
 -- | Generate a uniform 'Word32' from a 'Gen'.
 uniform :: PrimMonad m => Gen (PrimState m) -> m Word32
@@ -197,18 +197,29 @@ uniformR :: PrimMonad m => (Word32, Word32) -> Gen (PrimState m) -> m Word32
 uniformR (l,u) g = (+l) `liftM` uniformB (u - l) g
 {-# INLINE uniformR #-}
 
+advance :: PrimMonad m => Word64 -> Gen (PrimState m) -> m ()
+advance u (Gen p) = unsafePrimToPrim $ pcg32_advance_r p u
+{-# INLINE advance #-}
+
 ------------------------------------------------------------------------
 -- Foreign calls
 ------------------------------------------------------------------------
 
 -- It shouldn't be too hard to impliment the algorithm in pure haskell.
--- For now just use the pcg-c-basic interface.
+-- For now just use the c interface.
 
-foreign import ccall unsafe "pcg32_srandom_r"
+-- For whatever reason, calling the #defined versions doesn't seem to work
+-- so we need to call the low-level api directly
+
+foreign import ccall unsafe "pcg_setseq_64_srandom_r"
   pcg32_srandom_r :: Ptr Seed -> Word64 -> Word64 -> IO ()
 
-foreign import ccall unsafe "pcg32_random_r"
+foreign import ccall unsafe "pcg_setseq_64_xsh_rr_32_random_r"
   pcg32_random_r :: Ptr Seed -> IO Word32
 
-foreign import ccall unsafe "pcg32_boundedrand_r"
+foreign import ccall unsafe "pcg_setseq_64_xsh_rr_32_boundedrand_r"
   pcg32_boundedrand_r :: Ptr Seed -> Word32 -> IO Word32
+
+foreign import ccall unsafe "pcg_setseq_64_advance_r"
+  pcg32_advance_r :: Ptr Seed -> Word64 -> IO ()
+
