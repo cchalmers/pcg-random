@@ -1,6 +1,10 @@
 {-# LANGUAGE CPP                        #-}
+{-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE ForeignFunctionInterface   #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE RoleAnnotations            #-}
 -- |
 -- Module     : System.Random.PCG.Fast
@@ -35,7 +39,8 @@ module System.Random.PCG.Fast
   , create, initialize
 
     -- * Getting random numbers
-  , uniform, uniformB, advance
+  , RandomSource (..)
+  , uniform, uniformB, advance, retract
 
     -- * Seeds
   , FSeed, save, restore, fSeed, mkFSeed
@@ -45,6 +50,8 @@ import Control.Applicative
 import Control.Monad.Primitive
 import Foreign
 import System.IO.Unsafe
+
+import Data.Random.Source
 
 ------------------------------------------------------------------------
 -- Seed
@@ -95,7 +102,7 @@ initialize :: PrimMonad m => Word64 -> m (FGen (PrimState m))
 initialize a = unsafePrimToPrim $ do
   p <- malloc
   pcg32f_srandom_r p a
-  return (FGen p)
+  return  (FGen p)
 
 -- | Generate a uniform 'Word32' from a 'FGen'.
 uniform :: PrimMonad m => FGen (PrimState m) -> m Word32
@@ -107,9 +114,17 @@ uniformB :: PrimMonad m => Word32 -> FGen (PrimState m) -> m Word32
 uniformB u (FGen p) = unsafePrimToPrim $ pcg32f_boundedrand_r p u
 {-# INLINE uniformB #-}
 
+-- | Advance the given generator n steps in log(n) time.
 advance :: PrimMonad m => Word64 -> FGen (PrimState m) -> m ()
 advance u (FGen p) = unsafePrimToPrim $ pcg32f_advance_r p u
 {-# INLINE advance #-}
+
+-- | Retract the given generator n steps in log(2^64-n) time. This
+--   is just @advance (maxBound - n + 1)@.
+retract :: PrimMonad m => Word64 -> FGen (PrimState m) -> m ()
+retract u g = advance (0xffffffffffffffff - u + 1) g
+{-# INLINE retract #-}
+
 
 ------------------------------------------------------------------------
 -- Foreign calls
@@ -126,3 +141,15 @@ foreign import ccall unsafe "pcg_mcg_64_xsh_rs_32_boundedrand_r"
 
 foreign import ccall unsafe "pcg_mcg_64_advance_r"
   pcg32f_advance_r :: Ptr FSeed -> Word64 -> IO ()
+
+------------------------------------------------------------------------
+-- Instances
+------------------------------------------------------------------------
+
+randomSource [d|
+  instance (PrimMonad m, s ~ PrimState m) => RandomSource m (FGen s) where
+    getRandomWord32From s = uniform s
+    {-# INLINE getRandomWord32From #-}
+  |]
+
+
