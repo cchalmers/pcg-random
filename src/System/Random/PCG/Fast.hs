@@ -120,9 +120,9 @@ advance u (FGen p) = unsafePrimToPrim $ pcg32f_advance_r p u
 {-# INLINE advance #-}
 
 -- | Retract the given generator n steps in log(2^64-n) time. This
---   is just @advance (maxBound - n + 1)@.
+--   is just @advance (-n)@.
 retract :: PrimMonad m => Word64 -> FGen (PrimState m) -> m ()
-retract u g = advance (0xffffffffffffffff - u + 1) g
+retract u g = advance (-u) g
 {-# INLINE retract #-}
 
 
