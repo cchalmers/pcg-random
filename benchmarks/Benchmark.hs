@@ -12,6 +12,7 @@ import qualified System.Random.Mersenne as M
 
 benchIO :: String -> IO a -> Benchmark
 benchIO s a = bench s (whnfIO a)
+{-# INLINE benchIO #-}
 
 main :: IO ()
 main = do
@@ -22,21 +23,24 @@ main = do
   pcgU <- U.create
   mtg <- M.newMTGen . Just =<< MWC.uniform mwc
   defaultMain
-    [ bgroup "pcg"
-      [ benchIO "Word32" (PCG.uniform pcg :: IO Word32)
-      ]
-    , bgroup "pcg-fast"
+    -- [ bgroup "pcg"
+    --   [ benchIO "Word32" (PCG.uniform pcg :: IO Word32)
+    --   ]
+    [ bgroup "pcg-fast"
       [ benchIO "Word32" (F.uniform pcgF :: IO Word32)
+      -- , benchIO "rs-Word32" (F.getRandomWord32From pcgF :: IO Word32)
+      , benchIO "rs-Word64" (F.uniform pcgF :: IO Word64)
+      , benchIO "rs-Double" (F.uniform pcgF :: IO Double)
       ]
-    , bgroup "pcg-single"
-      [ benchIO "Word32" (S.uniform pcgS :: IO Word32)
-      ]
-    , bgroup "pcg-unique"
-      [ benchIO "Word32" (U.uniform pcgU :: IO Word32)
-      ]
+    -- , bgroup "pcg-single"
+    --   [ benchIO "Word32" (S.uniform pcgS :: IO Word32)
+    --   ]
+    -- , bgroup "pcg-unique"
+    --   [ benchIO "Word32" (U.uniform pcgU :: IO Word32)
+    --   ]
     , bgroup "mwc"
-      [ benchIO "Word32" (MWC.uniform mwc :: IO Word32)
-      -- , bench "Double" (uniform mwc :: IO Double)
+      [ benchIO "Word64" (MWC.uniform mwc :: IO Word64)
+      , benchIO "Double" (MWC.uniform mwc :: IO Double)
       -- , bench "Int"    (uniform mwc :: IO Int)
       ]
     -- , bgroup "random"
@@ -45,8 +49,8 @@ main = do
     --   , benchIO "Int"    (R.randomIO >>= evaluate :: IO Int)
     --   ]
     , bgroup "mersenne"
-      [ benchIO "Word32" (M.random mtg :: IO Word32)
-      -- , bench "Double" (M.random mtg :: IO Double)
+      [ benchIO "Word64" (M.random mtg :: IO Word64)
+      , benchIO "Double" (M.random mtg :: IO Double)
       -- , bench "Int" (M.random mtg :: IO Int)
       ]
     ]

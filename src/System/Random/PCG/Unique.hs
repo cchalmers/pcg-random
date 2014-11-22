@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP                        #-}
 {-# LANGUAGE ForeignFunctionInterface   #-}
 {-# LANGUAGE RoleAnnotations            #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
 --------------------------------------------------------------------
 -- |
 -- Module     : System.Random.PCG.Unique
@@ -15,8 +16,8 @@
 -- sequence to be unique by using the pointer address to select the
 -- output sequence.
 --
--- There is no way to store the state in a seed because then it wouldn't
--- be unique anymore. Also, generators can't be initialized in ST because
+-- There is no way to freeze the state  because then it wouldn't be
+-- unique anymore. Also, generators can't be initialized in ST because
 -- we don't know what pointer reference they'll get.
 --
 -- See http://www.pcg-random.org for details.
@@ -32,60 +33,62 @@
 --   c <- uniformB 30 g
 --   return [a,b,c]
 -- @
--- | Guarantees the stream to be unique by using the pointer
---   reference as the stream. There is no way to store the state
---   in a seed because then it wouldn't be unique anymore.
 
 module System.Random.PCG.Unique
   ( -- * Gen
-    UGen, create, initialize
+    Gen, create, initialize
 
     -- * Getting random numbers
-  , uniform, uniformB, advance
+  , Variate (..)
+  , advance, retract
   ) where
 
-import Control.Monad.Primitive
+import Data.Functor
 import Foreign
 
+import System.Random.PCG.Class
+
 -- | Standard initial seed.
-uSeed :: Word64
-uSeed = 0x4d595df4d0f33173
+seed :: Word64
+seed = 0x4d595df4d0f33173
 
 -- | Create a 'Gen' from a fixed initial seed.
-create :: IO UGen
-create =  unsafePrimToPrim $ do
+create :: IO Gen
+create =  do
   p <- malloc
-  poke p uSeed
-  return (UGen p)
+  poke p seed
+  return (Gen p)
 
 ------------------------------------------------------------------------
 -- UGen
 ------------------------------------------------------------------------
 
 -- | State of the random number generator
-newtype UGen = UGen (Ptr Word64)
+newtype Gen = Gen (Ptr Word64)
 
 -- | Create a generator from two words. Note: this is not the same as the
 --   two words in a 'Seed'.
-initialize :: Word64 -> IO UGen
+initialize :: Word64 -> IO Gen
 initialize a = do
   p <- malloc
   pcg32u_srandom_r p a
-  return (UGen p)
+  return (Gen p)
 
--- | Generate a uniform 'Word32' from a 'UGen'.
-uniform :: UGen -> IO Word32
-uniform (UGen p) = pcg32u_random_r p
-{-# INLINE uniform #-}
+-- -- | Generate a uniform 'Word32' bounded above by the given bound.
+-- uniformB :: Word32 -> UGen -> IO Word32
+-- uniformB u (UGen p) = unsafePrimToPrim $ pcg32u_boundedrand_r p u
+-- {-# INLINE uniformB #-}
 
--- | Generate a uniform 'Word32' bounded above by the given bound.
-uniformB :: Word32 -> UGen -> IO Word32
-uniformB u (UGen p) = unsafePrimToPrim $ pcg32u_boundedrand_r p u
-{-# INLINE uniformB #-}
-
-advance :: Word64 -> UGen -> IO ()
-advance u (UGen p) = unsafePrimToPrim $ pcg32u_advance_r p u
+-- | Advance the given generator n steps in log(n) time.
+advance :: Word64 -> Gen -> IO ()
+advance u (Gen p) = pcg32u_advance_r p u
 {-# INLINE advance #-}
+
+-- | Retract the given generator n steps in log(2^64-n) time. This
+--   is just @advance (-n)@.
+retract :: Word64 -> Gen -> IO ()
+retract u g = advance (-u) g
+{-# INLINE retract #-}
 
 ------------------------------------------------------------------------
 -- Foreign calls
@@ -97,8 +100,22 @@ foreign import ccall unsafe "pcg_unique_64_srandom_r"
 foreign import ccall unsafe "pcg_unique_64_xsh_rs_32_random_r"
   pcg32u_random_r :: Ptr Word64 -> IO Word32
 
-foreign import ccall unsafe "pcg_unique_64_xsh_rs_32_boundedrand_r"
-  pcg32u_boundedrand_r :: Ptr Word64 -> Word32 -> IO Word32
+-- foreign import ccall unsafe "pcg_unique_64_xsh_rs_32_boundedrand_r"
+--   pcg32u_boundedrand_r :: Ptr Word64 -> Word32 -> IO Word32
 
 foreign import ccall unsafe "pcg_unique_64_advance_r"
   pcg32u_advance_r :: Ptr Word64 -> Word64 -> IO ()
+
+------------------------------------------------------------------------
+-- Instances
+------------------------------------------------------------------------
+
+instance Generator Gen IO where
+  uniform1 f (Gen p) = f <$> pcg32u_random_r p
+  {-# INLINE uniform1 #-}
+
+  uniform2 f (Gen p) = do
+    w1 <- pcg32u_random_r p
+    w2 <- pcg32u_random_r p
+    return $ f w1 w2
+  {-# INLINE uniform2 #-}

@@ -1,6 +1,10 @@
 {-# LANGUAGE CPP                        #-}
+{-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE ForeignFunctionInterface   #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE RoleAnnotations            #-}
 --------------------------------------------------------------------
 -- |
@@ -12,8 +16,8 @@
 -- Portability: CPP, FFI
 -- Tested with: GHC 7.8.3
 --
--- Minimal iterface to the PCG Random Number Generator. See
--- http://www.pcg-random.org
+-- Single variant of the PCG random number generator. This module only
+-- uses a single stream. See http://www.pcg-random.org for details.
 --
 -- @
 -- import Control.Monad.ST
@@ -29,98 +33,141 @@
 -- @
 module System.Random.PCG.Single
   ( -- * Gen
-    SGen
+    Gen
   , create, initialize
 
     -- * Getting random numbers
-  , uniform, uniformB, advance
+  , Variate (..)
+  , advance, retract
 
     -- * Seeds
-  , SSeed, save, restore, sSeed, mkSSeed
+  , FrozenGen, save, restore, seed, initFrozen
   ) where
 
 import Control.Applicative
 import Control.Monad.Primitive
 import Foreign
 import System.IO.Unsafe
+import System.Random
+import System.Random.PCG.Class
 
 ------------------------------------------------------------------------
 -- Seed
 ------------------------------------------------------------------------
 
-newtype SSeed = SSeed Word64
+newtype FrozenGen = F Word64
   deriving (Show, Eq, Ord, Storable)
 
--- | Save the state of a 'SGen' in a 'Seed'.
-save :: PrimMonad m => SGen (PrimState m) -> m SSeed
-save (SGen p) = unsafePrimToPrim (peek p)
+-- | Save the state of a 'Gen' in a 'Seed'.
+save :: PrimMonad m => Gen (PrimState m) -> m FrozenGen
+save (Gen p) = unsafePrimToPrim (peek p)
 {-# INLINE save #-}
 
--- | Restore a 'SGen' from a 'Seed'.
-restore :: PrimMonad m => SSeed -> m (SGen (PrimState m))
+-- | Restore a 'Gen' from a 'Seed'.
+restore :: PrimMonad m => FrozenGen -> m (Gen (PrimState m))
 restore s = unsafePrimToPrim $ do
   p <- malloc
   poke p s
-  return (SGen p)
+  return (Gen p)
 {-# INLINE restore #-}
 
-mkSSeed :: Word64 -> SSeed
-mkSSeed w = unsafePerformIO $ do
+initFrozen :: Word64 -> FrozenGen
+initFrozen w = unsafePerformIO $ do
   p <- malloc
   pcg32s_srandom_r p w
   peek p <* free p
-{-# INLINE mkSSeed #-}
+{-# INLINE initFrozen #-}
 
 -- | Standard initial seed.
-sSeed :: SSeed
-sSeed = SSeed 0x4d595df4d0f33173
+seed :: FrozenGen
+seed = F 0x4d595df4d0f33173
 
 -- | Create a 'Gen' from a fixed initial seed.
-create :: PrimMonad m => m (SGen (PrimState m))
-create = restore sSeed
+create :: PrimMonad m => m (Gen (PrimState m))
+create = restore seed
 
 ------------------------------------------------------------------------
--- SGen
+-- Gen
 ------------------------------------------------------------------------
 
 -- | State of the random number generator
-newtype SGen s = SGen (Ptr SSeed)
-type role SGen representational
+newtype Gen s = Gen (Ptr FrozenGen)
+type role Gen representational
 
--- | Create a generator from two words. Note: this is not the same as the
---   two words in a 'Seed'.
-initialize :: PrimMonad m => Word64 -> m (SGen (PrimState m))
+-- | Seed a generator.
+initialize :: PrimMonad m => Word64 -> m (Gen (PrimState m))
 initialize a = unsafePrimToPrim $ do
   p <- malloc
   pcg32s_srandom_r p a
-  return (SGen p)
+  return (Gen p)
 
--- | SGenerate a uniform 'Word32' from a 'SGen'.
-uniform :: PrimMonad m => SGen (PrimState m) -> m Word32
-uniform (SGen p) = unsafePrimToPrim $ pcg32s_random_r p
-{-# INLINE uniform #-}
+-- -- | Generate a uniform 'Word32' bounded by the given bound.
+-- uniformB :: PrimMonad m => Word32 -> Gen (PrimState m) -> m Word32
+-- uniformB u (Gen p) = unsafePrimToPrim $ pcg32s_boundedrand_r p u
+-- {-# INLINE uniformB #-}
 
--- | SGenerate a uniform 'Word32' bounded by the given bound.
-uniformB :: PrimMonad m => Word32 -> SGen (PrimState m) -> m Word32
-uniformB u (SGen p) = unsafePrimToPrim $ pcg32s_boundedrand_r p u
-{-# INLINE uniformB #-}
-
-advance :: PrimMonad m => Word64 -> SGen (PrimState m) -> m ()
-advance u (SGen p) = unsafePrimToPrim $ pcg32s_advance_r p u
+advance :: PrimMonad m => Word64 -> Gen (PrimState m) -> m ()
+advance u (Gen p) = unsafePrimToPrim $ pcg32s_advance_r p u
 {-# INLINE advance #-}
+
+-- | Retract the given generator n steps in log(2^64-n) time. This
+--   is just @advance (-n)@.
+retract :: PrimMonad m => Word64 -> Gen (PrimState m) -> m ()
+retract u g = advance (-u) g
+{-# INLINE retract #-}
 
 ------------------------------------------------------------------------
 -- Foreign calls
 ------------------------------------------------------------------------
 
 foreign import ccall unsafe "pcg_oneseq_64_srandom_r"
-  pcg32s_srandom_r :: Ptr SSeed -> Word64 -> IO ()
+  pcg32s_srandom_r :: Ptr FrozenGen -> Word64 -> IO ()
 
 foreign import ccall unsafe "pcg_oneseq_64_xsh_rs_32_random_r"
-  pcg32s_random_r :: Ptr SSeed -> IO Word32
+  pcg32s_random_r :: Ptr FrozenGen -> IO Word32
 
-foreign import ccall unsafe "pcg_oneseq_64_xsh_rs_32_boundedrand_r"
-  pcg32s_boundedrand_r :: Ptr SSeed -> Word32 -> IO Word32
+-- foreign import ccall unsafe "pcg_oneseq_64_xsh_rs_32_boundedrand_r"
+--   pcg32s_boundedrand_r :: Ptr FrozenGen -> Word32 -> IO Word32
 
 foreign import ccall unsafe "pcg_oneseq_64_advance_r"
-  pcg32s_advance_r :: Ptr SSeed -> Word64 -> IO ()
+  pcg32s_advance_r :: Ptr FrozenGen -> Word64 -> IO ()
+
+------------------------------------------------------------------------
+-- Instances
+------------------------------------------------------------------------
+
+instance (PrimMonad m, s ~ PrimState m) => Generator (Gen s) m where
+  uniform1 f (Gen p) = unsafePrimToPrim $ f <$> pcg32s_random_r p
+  {-# INLINE uniform1 #-}
+
+  uniform2 f (Gen p) = unsafePrimToPrim $ do
+    w1 <- pcg32s_random_r p
+    w2 <- pcg32s_random_r p
+    return $ f w1 w2
+  {-# INLINE uniform2 #-}
+
+instance RandomGen FrozenGen where
+  next s = unsafeDupablePerformIO $ do
+    p <- malloc
+    poke p s
+    w1 <- pcg32s_random_r p
+    w2 <- pcg32s_random_r p
+    s' <- peek p
+    free p
+    return (wordsTo64Bit w1 w2, s')
+  {-# INLINE next #-}
+
+  split s = unsafeDupablePerformIO $ do
+    p  <- malloc
+    poke p s
+    w1 <- pcg32s_random_r p
+    w2 <- pcg32s_random_r p
+    w3 <- pcg32s_random_r p
+    w4 <- pcg32s_random_r p
+    pcg32s_srandom_r p (wordsTo64Bit w1 w2)
+    s1 <- peek p
+    pcg32s_srandom_r p (wordsTo64Bit w3 w4)
+    s2 <- peek p
+    free p
+    return (s1,s2)
+
