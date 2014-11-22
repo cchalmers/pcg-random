@@ -54,17 +54,23 @@ seed = 0x4d595df4d0f33173
 
 -- | Create a 'Gen' from a fixed initial seed.
 create :: IO Gen
-create =  do
-  p <- malloc
-  poke p seed
-  return (Gen p)
+create = initialize seed
+  -- do
+  -- p <- malloc
+  -- poke p seed
+  -- return (Gen p)
+  -- Note that this does produce a unique sequence but if two generators
+  -- are created in sequence they'll have the similar pointer references
+  -- and the first couple of numbers are likely to be the same. This is
+  -- undesirable. We run initialise to randomise it.
 
 ------------------------------------------------------------------------
--- UGen
+-- Generator
 ------------------------------------------------------------------------
 
 -- | State of the random number generator
 newtype Gen = Gen (Ptr Word64)
+  deriving (Eq, Ord)
 
 -- | Create a generator from two words. Note: this is not the same as the
 --   two words in a 'Seed'.
