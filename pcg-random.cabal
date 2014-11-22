@@ -33,11 +33,7 @@ library
 
   ghc-options:     -Wall -O2
 
-  c-sources:        c/pcg-advance-128.c c/pcg-advance-16.c c/pcg-advance-32.c c/pcg-advance-64.c
-                    c/pcg-advance-8.c c/pcg-global-32.c c/pcg-global-64.c c/pcg-output-128.c
-                    c/pcg-output-16.c c/pcg-output-32.c c/pcg-output-64.c c/pcg-output-8.c
-                    c/pcg-rngs-128.c c/pcg-rngs-16.c c/pcg-rngs-32.c c/pcg-rngs-64.c
-                    c/pcg-rngs-8.c
-  include-dirs:     include
+  c-sources:        c/pcg-advance-64.c c/pcg-global-64.c c/pcg-output-64.c c/pcg-rngs-64.c
+  include-dirs:     c
   includes:         pcg_variants.h
   install-includes: pcg_variants.h
