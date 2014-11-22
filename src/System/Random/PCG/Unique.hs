@@ -36,7 +36,8 @@
 
 module System.Random.PCG.Unique
   ( -- * Gen
-    Gen, create, initialize
+    Gen
+  , create, createSystemRandom, initialize, withSystemRandom
 
     -- * Getting random numbers
   , Variate (..)
@@ -79,6 +80,16 @@ initialize a = do
   p <- malloc
   pcg32u_srandom_r p a
   return (Gen p)
+
+-- | Seed with system random number. (\"@\/dev\/urandom@\" on Unix-like
+--   systems, time otherwise).
+withSystemRandom :: (Gen -> IO a) -> IO a
+withSystemRandom f = sysRandom >>= initialize >>= f
+
+-- | Seed a PRNG with data from the system's fast source of pseudo-random
+--   numbers. All the caveats of 'withSystemRandom' apply here as well.
+createSystemRandom :: IO Gen
+createSystemRandom = withSystemRandom return
 
 -- -- | Generate a uniform 'Word32' bounded above by the given bound.
 -- uniformB :: Word32 -> UGen -> IO Word32

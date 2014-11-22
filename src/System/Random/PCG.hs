@@ -32,8 +32,8 @@
 
 module System.Random.PCG
   ( -- * Generator
-    Gen, IOGen, STGen
-  , create, initialize
+    Gen, GenIO, GenST
+  , create, createSystemRandom, initialize, withSystemRandom
 
     -- * Getting random numbers
   , Variate (..)
@@ -114,10 +114,10 @@ type role Gen representational
 -- this should be type safe because the Gen cannot escape its PrimMonad
 
 -- | Type alias of 'Gen' specialized to 'IO'.
-type IOGen = Gen RealWorld
+type GenIO = Gen RealWorld
 
 -- | Type alias of 'Gen' specialized to 'ST'. (
-type STGen s = Gen s
+type GenST s = Gen s
 -- Note this doesn't force it to be in ST. You can write (STGen Realworld)
 -- and it'll work in IO. Writing STGen s = Gen (PrimState (ST s)) doesn't
 -- solve this.
@@ -136,6 +136,19 @@ initialize a b = unsafePrimToPrim $ do
   p <- malloc
   pcg32_srandom_r p a b
   return (Gen p)
+
+-- | Seed with system random number. (\"@\/dev\/urandom@\" on Unix-like
+--   systems, time otherwise).
+withSystemRandom :: PrimMonad m => (Gen (PrimState m) -> m a) -> IO a
+withSystemRandom f = do
+  w1 <- sysRandom
+  w2 <- sysRandom
+  unsafePrimToIO $ initialize w1 w2 >>= f
+
+-- | Seed a PRNG with data from the system's fast source of pseudo-random
+-- numbers. All the caveats of 'withSystemRandom' apply here as well.
+createSystemRandom :: IO GenIO
+createSystemRandom = withSystemRandom (return :: GenIO -> IO GenIO)
 
 -- -- | Generate a uniform 'Word32' bounded by the given bound.
 -- uniformB :: PrimMonad m => Word32 -> Gen (PrimState m) -> m Word32

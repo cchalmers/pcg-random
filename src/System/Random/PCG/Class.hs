@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module System.Random.PCG.Class
   ( -- * Classes
@@ -21,12 +22,23 @@ module System.Random.PCG.Class
   , wordToBool
   , wordToFloat
   , wordsToDouble
+  , sysRandom
   ) where
 
 import Data.Word
 import Data.Int
 import Data.Bits
 import Control.Monad
+import System.IO
+import Foreign
+
+import Data.Ratio              ((%), numerator)
+import Data.IORef              (atomicModifyIORef, newIORef)
+import Data.Time.Clock.POSIX   (getPOSIXTime)
+import System.CPUTime   (cpuTimePrecision, getCPUTime)
+import qualified Control.Exception as E
+import System.IO.Unsafe (unsafePerformIO)
+
 
 class Monad m => Generator g m where
   uniform1 :: (Word32 -> a) -> g -> m a
@@ -269,4 +281,37 @@ wordsToDouble x y  = (fromIntegral u * m_inv_32 + (0.5 + m_inv_53) +
           u        = fromIntegral x :: Int32
           v        = fromIntegral y :: Int32
 {-# INLINE wordsToDouble #-}
+
+-- IO randoms
+
+devRandom :: IO Word64
+devRandom =
+  allocaBytes 8 $ \buf -> do
+    nread <- withBinaryFile "/dev/urandom" ReadMode $ \h -> hGetBuf h buf 8
+    when (nread /= 8) $ error "unable to read from /dev/urandom"
+    peek buf
+
+-- Aquire seed from current time. This is horrible fallback for
+-- Windows system.
+acquireSeedTime :: IO Word64
+acquireSeedTime = do
+  c <- (numerator . (%cpuTimePrecision)) `liftM` getCPUTime
+  t <- toRational `liftM` getPOSIXTime
+  let n    = fromIntegral (numerator t) :: Word64
+  return $ wordsTo64Bit (fromIntegral c) (fromIntegral n)
+
+-- | Get a random number from system source. If "/dev/urandom" is not
+--   found return inferior random number from time.
+sysRandom :: IO Word64
+sysRandom =
+  devRandom `E.catch` \(_ :: E.IOException) -> do
+    seen <- atomicModifyIORef warned ((,) True)
+    unless seen $ E.handle (\(_::E.IOException) -> return ()) $ do
+      hPutStrLn stderr ("Warning: Couldn't open /dev/urandom")
+      hPutStrLn stderr ("Warning: using system clock for seed instead " ++
+                        "(quality will be lower)")
+    acquireSeedTime
+  where
+    warned = unsafePerformIO $ newIORef False
+    {-# NOINLINE warned #-}
 
