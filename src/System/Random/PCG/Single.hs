@@ -72,10 +72,8 @@ restore s = unsafePrimToPrim $ do
 {-# INLINE restore #-}
 
 initFrozen :: Word64 -> FrozenGen
-initFrozen w = unsafePerformIO $ do
-  p <- malloc
-  pcg32s_srandom_r p w
-  peek p <* free p
+initFrozen w = unsafeDupablePerformIO . alloca $ \p ->
+  pcg32s_srandom_r p w >> peek p
 {-# INLINE initFrozen #-}
 
 -- | Standard initial seed.
@@ -92,6 +90,7 @@ create = restore seed
 
 -- | State of the random number generator
 newtype Gen s = Gen (Ptr FrozenGen)
+  deriving (Eq, Ord)
 type role Gen representational
 
 -- | Seed a generator.
@@ -137,13 +136,12 @@ foreign import ccall unsafe "pcg_oneseq_64_advance_r"
 ------------------------------------------------------------------------
 
 instance (PrimMonad m, s ~ PrimState m) => Generator (Gen s) m where
-  uniform1 f (Gen p) = unsafePrimToPrim $ f <$> pcg32s_random_r p
+  uniform1 f (Gen p) = unsafePrimToPrim $
+    f <$> pcg32s_random_r p
   {-# INLINE uniform1 #-}
 
-  uniform2 f (Gen p) = unsafePrimToPrim $ do
-    w1 <- pcg32s_random_r p
-    w2 <- pcg32s_random_r p
-    return $ f w1 w2
+  uniform2 f (Gen p) = unsafePrimToPrim $
+    f <$> pcg32s_random_r p <*> pcg32s_random_r p
   {-# INLINE uniform2 #-}
 
 instance RandomGen FrozenGen where

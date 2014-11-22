@@ -97,6 +97,7 @@ create = restore seed
 
 -- | State of the random number generator
 newtype Gen s = Gen (Ptr FrozenGen)
+  deriving (Eq, Ord)
 type role Gen representational
 
 -- | Seed a generator.
