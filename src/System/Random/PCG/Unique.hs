@@ -1,6 +1,5 @@
 {-# LANGUAGE CPP                        #-}
 {-# LANGUAGE ForeignFunctionInterface   #-}
-{-# LANGUAGE RoleAnnotations            #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 --------------------------------------------------------------------
 -- |
@@ -60,10 +59,11 @@ create = initialize seed
   -- p <- malloc
   -- poke p seed
   -- return (Gen p)
+
   -- Note that this does produce a unique sequence but if two generators
   -- are created in sequence they'll have the similar pointer references
-  -- and the first couple of numbers are likely to be the same. This is
-  -- undesirable. We run initialise to randomise it.
+  -- and the first couple of numbers are likely to be the same. Since
+  -- this is undesirable we run initialise to randomise it.
 
 ------------------------------------------------------------------------
 -- Generator

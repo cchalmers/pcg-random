@@ -3,7 +3,9 @@
 {-# LANGUAGE ForeignFunctionInterface   #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+#if __GLASGOW_HASKELL__ >= 707
 {-# LANGUAGE RoleAnnotations            #-}
+#endif
 --------------------------------------------------------------------
 -- |
 -- Module     : System.Random.PCG
@@ -21,12 +23,12 @@
 -- import Control.Monad.ST
 -- import System.Random.PCG
 --
--- three :: [Word32]
+-- three :: [Double]
 -- three = runST $ do
 --   g <- create
---   a <- uniformB 10 g
---   b <- uniformB 20 g
---   c <- uniformB 30 g
+--   a <- uniform g
+--   b <- uniform g
+--   c <- uniform g
 --   return [a,b,c]
 -- @
 
@@ -40,7 +42,8 @@ module System.Random.PCG
   , advance, retract
 
     -- * Frozen generator
-  , FrozenGen, save, restore, seed, initFrozen
+  , FrozenGen
+  , save, restore, seed, initFrozen
   ) where
 
 import Control.Applicative
@@ -72,15 +75,6 @@ restore s = unsafePrimToPrim $ do
   return (Gen p)
 {-# INLINE restore #-}
 
--- -- | Produce an infinite stream of random words using the given seed.
--- uniforms :: FrozenGen -> [Word32]
--- uniforms s = map unsafePerformIO $ repeat (pcg32_random_r pointer)
---   where
---     pointer = unsafePerformIO $ do
---       p <- malloc
---       poke p s
---       return p
-
 -- | Generate a new seed using two 'Word64's. Note: the words in the show
 --   instance of the FrozenGen will not be the same as the words given.
 initFrozen :: Word64 -> Word64 -> FrozenGen
@@ -109,7 +103,10 @@ instance Storable FrozenGen where
 -- | State of the random number generator
 newtype Gen s = Gen (Ptr FrozenGen)
   deriving (Eq, Ord)
+
+#if __GLASGOW_HASKELL__ >= 707
 type role Gen representational
+#endif
 
 -- this should be type safe because the Gen cannot escape its PrimMonad
 
@@ -122,10 +119,11 @@ type GenST s = Gen s
 -- and it'll work in IO. Writing STGen s = Gen (PrimState (ST s)) doesn't
 -- solve this.
 
--- | Create a 'Gen' from a fixed initial seed.
+-- | Create a 'Gen' from a fixed initial 'seed'.
 create :: PrimMonad m => m (Gen (PrimState m))
 create = restore seed
 
+-- | Fixed seed.
 seed :: FrozenGen
 seed = FrozenGen 0x853c49e6748fea9b 0xda3e39cb94b95bdb
 

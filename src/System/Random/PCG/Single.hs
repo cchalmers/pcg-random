@@ -2,10 +2,11 @@
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE ForeignFunctionInterface   #-}
 {-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+#if __GLASGOW_HASKELL__ >= 707
 {-# LANGUAGE RoleAnnotations            #-}
+#endif
 --------------------------------------------------------------------
 -- |
 -- Module     : System.Random.PCG.Single
@@ -91,7 +92,9 @@ create = restore seed
 -- | State of the random number generator
 newtype Gen s = Gen (Ptr FrozenGen)
   deriving (Eq, Ord)
+#if __GLASGOW_HASKELL__ >= 707
 type role Gen representational
+#endif
 
 type GenIO = Gen RealWorld
 type GenST = Gen

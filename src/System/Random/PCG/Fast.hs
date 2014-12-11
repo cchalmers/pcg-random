@@ -4,7 +4,9 @@
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+#if __GLASGOW_HASKELL__ >= 707
 {-# LANGUAGE RoleAnnotations            #-}
+#endif
 -- |
 -- Module     : System.Random.PCG.Fast
 -- Copyright  : Copyright (c) 2014, Christopher Chalmers <c.chalmers@me.com>
@@ -60,9 +62,6 @@ import System.Random.PCG.Class
 newtype FrozenGen = F Word64
   deriving (Show, Eq, Ord, Storable)
 
--- newtype FrozenGen = FrozenGen Word64
---   deriving (Show, Eq, Ord, Storable)
-
 -- | Save the state of a 'Gen' in a 'Seed'.
 save :: PrimMonad m => Gen (PrimState m) -> m FrozenGen
 save (Gen p) = unsafePrimToPrim (peek p)
@@ -76,6 +75,7 @@ restore s = unsafePrimToPrim $ do
   return (Gen p)
 {-# INLINE restore #-}
 
+-- | Initialize a 'FrozenGen' from a seed.
 initFrozen :: Word64 -> FrozenGen
 initFrozen w = unsafePerformIO $ do
   p <- malloc
@@ -98,7 +98,9 @@ create = restore seed
 -- | State of the random number generator
 newtype Gen s = Gen (Ptr FrozenGen)
   deriving (Eq, Ord)
+#if __GLASGOW_HASKELL__ >= 707
 type role Gen representational
+#endif
 
 type GenIO = Gen RealWorld
 type GenST = Gen
