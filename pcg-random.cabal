@@ -1,15 +1,36 @@
 name:                pcg-random
 version:             0.1.0.0
 synopsis:            Haskell intreface to the PCG random number generator.
--- description:         
+description:         PCG is a family of simple fast space-efficient
+                     statistically good algorithms for random number
+                     generation with better-than-typical cryptographic
+                     security.
+                     .
+                     This library impliments bindings to the standard C
+                     implimentation.
+                     .
+                     There is a pure implimentation that can be used as a
+                     generator with the random package as well as a
+                     faster primitive (IO or ST) api that includes
+                     functions for generating common types (Double, Bool
+                     etc.) which is very similar to mwc-random.
+                     .
+                     The generators in this module are suitable for
+                     parallel but make sure threads don't share the same
+                     generator or things will go horrbly wrong.
 license:             BSD3
 license-file:        LICENSE
 author:              Christopher Chalmers
 maintainer:          c.chalmers@me.com
+Homepage:            http://github.com/cchalmers/pcg-random
+Bug-reports:         http://github.com/cchalmers/pcg-random/issues
 copyright:           (c) 2014. Christopher Chalmers <c.chalmers@me.com>
 category:            System
 build-type:          Simple
 cabal-version:       >=1.10
+Source-repository head
+  type:     git
+  location: http://github.com/cchalmers/pcg-random
 
 library
   exposed-modules:     System.Random.PCG,
