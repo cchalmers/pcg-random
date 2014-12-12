@@ -17,4 +17,5 @@ executable bm
     mersenne-random,
     mwc-random,
     pcg-random,
-    random
+    random,
+    mersenne-random-pure64
