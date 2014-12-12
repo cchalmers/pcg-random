@@ -7,4 +7,4 @@ ghc:
   - 7.4
 
 script:
-  - cabal configure && cabal build -v3
+  - cabal configure -v3 && cabal build -v3
