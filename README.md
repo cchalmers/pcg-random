@@ -1,5 +1,7 @@
 ## pcg-random
 
+[![Build Status](https://travis-ci.org/cchalmers/pcg-random.svg)](https://travis-ci.org/cchalmers/pcg-random)
+
 Haskell bindings to the PCG random number generator http://www.pcg-random.org.
 
 > PCG is a family of simple fast space-efficient statistically good algorithms for random number generation with better-than-typical cryptographic security
