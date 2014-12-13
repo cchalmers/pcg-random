@@ -11,7 +11,7 @@ module System.Random.PCG.Class
     Generator (..)
   , Variate (..)
 
-    -- * Type contricted versions
+    -- * Type constricted versions
   , uniformW8, uniformW16, uniformW32, uniformW64
   , uniformI8, uniformI16, uniformI32, uniformI64
   , uniformF, uniformD
@@ -38,7 +38,6 @@ import Data.Time.Clock.POSIX   (getPOSIXTime)
 import System.CPUTime   (cpuTimePrecision, getCPUTime)
 import qualified Control.Exception as E
 import System.IO.Unsafe (unsafePerformIO)
-
 
 class Monad m => Generator g m where
   uniform1 :: (Word32 -> a) -> g -> m a
@@ -291,7 +290,7 @@ devRandom =
     when (nread /= 8) $ error "unable to read from /dev/urandom"
     peek buf
 
--- Aquire seed from current time. This is horrible fallback for
+-- Acquire seed from current time. This is horrible fall-back for
 -- Windows system.
 acquireSeedTime :: IO Word64
 acquireSeedTime = do
