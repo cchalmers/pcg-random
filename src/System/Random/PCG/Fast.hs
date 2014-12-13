@@ -77,7 +77,7 @@ restore s = unsafePrimToPrim $ do
 
 -- | Initialize a 'FrozenGen' from a seed.
 initFrozen :: Word64 -> FrozenGen
-initFrozen w = unsafePerformIO $ do
+initFrozen w = unsafeDupablePerformIO $ do
   p <- malloc
   pcg32f_srandom_r p w
   peek p <* free p

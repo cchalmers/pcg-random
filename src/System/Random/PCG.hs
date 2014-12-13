@@ -78,7 +78,7 @@ restore s = unsafePrimToPrim $ do
 -- | Generate a new seed using two 'Word64's. Note: the words in the show
 --   instance of the FrozenGen will not be the same as the words given.
 initFrozen :: Word64 -> Word64 -> FrozenGen
-initFrozen w1 w2 = unsafePerformIO $ do
+initFrozen w1 w2 = unsafeDupablePerformIO $ do
   p <- malloc
   pcg32_srandom_r p w1 w2
   peek p <* free p
@@ -211,7 +211,7 @@ instance RandomGen FrozenGen where
     return (wordsTo64Bit w1 w2, s')
   {-# INLINE next #-}
 
-  split s = unsafePerformIO $ do
+  split s = unsafeDupablePerformIO $ do
     p <- malloc
     poke p s
     w1 <- pcg32_random_r p

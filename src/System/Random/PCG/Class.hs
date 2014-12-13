@@ -30,7 +30,7 @@ import Data.Int
 import Data.Bits
 import Control.Monad
 import System.IO
-import Foreign
+import Foreign (allocaBytes, peek)
 
 import Data.Ratio              ((%), numerator)
 import Data.IORef              (atomicModifyIORef, newIORef)
