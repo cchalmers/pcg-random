@@ -64,3 +64,11 @@ library
   include-dirs:     c
   includes:         pcg_variants.h
   install-includes: pcg_variants.h
+
+test-suite doctests
+  default-language: Haskell2010
+  type:             exitcode-stdio-1.0
+  main-is:          doctest.hs
+  hs-source-dirs:   test
+  build-depends:    base,
+                    doctest

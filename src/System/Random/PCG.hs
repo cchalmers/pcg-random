@@ -54,6 +54,11 @@ import System.Random
 
 import System.Random.PCG.Class
 
+-- $setup
+-- >>> import System.Random.PCG
+-- >>> import System.Random.PCG.Class
+-- >>> import Control.Monad
+
 ------------------------------------------------------------------------
 -- State
 ------------------------------------------------------------------------
@@ -75,8 +80,14 @@ restore s = unsafePrimToPrim $ do
   return (Gen p)
 {-# INLINE restore #-}
 
--- | Generate a new seed using two 'Word64's. Note: the words in the show
---   instance of the FrozenGen will not be the same as the words given.
+-- | Fixed seed.
+seed :: FrozenGen
+seed = FrozenGen 0x853c49e6748fea9b 0xda3e39cb94b95bdb
+
+-- | Generate a new seed using two 'Word64's.
+--
+--   >>> initFrozen 0 0
+--   FrozenGen 6364136223846793006 1
 initFrozen :: Word64 -> Word64 -> FrozenGen
 initFrozen w1 w2 = unsafeDupablePerformIO $ do
   p <- malloc
@@ -123,12 +134,11 @@ type GenST s = Gen s
 create :: PrimMonad m => m (Gen (PrimState m))
 create = restore seed
 
--- | Fixed seed.
-seed :: FrozenGen
-seed = FrozenGen 0x853c49e6748fea9b 0xda3e39cb94b95bdb
-
 -- | FrozenGen a generator with two words. The first is the position in the
 --   stream and the second which stream to use.
+--
+--   >>> initialize 0 0 >>= save
+--   FrozenGen 6364136223846793006 1
 initialize :: PrimMonad m => Word64 -> Word64 -> m (Gen (PrimState m))
 initialize a b = unsafePrimToPrim $ do
   p <- malloc
@@ -153,13 +163,27 @@ createSystemRandom = withSystemRandom (return :: GenIO -> IO GenIO)
 -- uniformB u (Gen p) = unsafePrimToPrim $ pcg32_boundedrand_r p u
 -- {-# INLINE uniformB #-}
 
--- | Advance the given generator n steps in log(n) time.
+-- | Advance the given generator n steps in log(n) time. (Note that a
+--   \"step\" is a single random 32-bit (or less) 'Variate'. Data types
+--   such as 'Double' or 'Word64' require two \"steps\".)
+--
+--   >>> create >>= \g -> replicateM_ 1000 (uniformW32 g) >> uniformW32 g
+--   3640764222
+--   >>> create >>= \g -> replicateM_ 500 (uniformD g) >> uniformW32 g
+--   3640764222
+--   >>> create >>= \g -> advance 1000 g >> uniformW32 g
+--   3640764222
 advance :: PrimMonad m => Word64 -> Gen (PrimState m) -> m ()
 advance u (Gen p) = unsafePrimToPrim $ pcg32_advance_r p u
 {-# INLINE advance #-}
 
 -- | Retract the given generator n steps in log(2^64-n) time. This
 --   is just @advance (-n)@.
+--
+--   >>> create >>= \g -> replicateM 3 (uniformW32 g)
+--   [355248013,41705475,3406281715]
+--   >>> create >>= \g -> retract 1 g >> replicateM 3 (uniformW32 g)
+--   [19683962,355248013,41705475]
 retract :: PrimMonad m => Word64 -> Gen (PrimState m) -> m ()
 retract u g = advance (-u) g
 {-# INLINE retract #-}
