@@ -134,8 +134,7 @@ type GenST s = Gen s
 create :: PrimMonad m => m (Gen (PrimState m))
 create = restore seed
 
--- | FrozenGen a generator with two words. The first is the position in the
---   stream and the second which stream to use.
+-- | Initialize a generator with two words.
 --
 --   >>> initialize 0 0 >>= save
 --   FrozenGen 6364136223846793006 1

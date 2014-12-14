@@ -1,20 +1,31 @@
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE MagicHash #-}
-{-# LANGUAGE UnboxedTuples #-}
+{-# LANGUAGE CPP                   #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE MagicHash             #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE UnboxedTuples         #-}
+-- |
+-- Module     : System.Random.PCG.Class
+-- Copyright  : Copyright (c) 2014, Christopher Chalmers <c.chalmers@me.com>
+-- License    : BSD3
+-- Maintainer : Christopher Chalmers <c.chalmers@me.com>
+-- Stability  : experimental
+-- Portability: CPP
+-- Tested with: GHC 7.8.3
+--
+-- Classes for working with random numbers along with utility functions.
+-- In a future release this module may disappear and use another module
+-- for this functionality.
 module System.Random.PCG.Class
   ( -- * Classes
     Generator (..)
   , Variate (..)
 
-    -- * Type constricted versions
+    -- * Type restricted versions
   , uniformW8, uniformW16, uniformW32, uniformW64
   , uniformI8, uniformI16, uniformI32, uniformI64
-  , uniformF, uniformD
+  , uniformF, uniformD, uniformBool
 
    -- * Utilities
   , Unsigned
@@ -25,85 +36,43 @@ module System.Random.PCG.Class
   , sysRandom
   ) where
 
-import Data.Word
-import Data.Int
-import Data.Bits
-import Control.Monad
-import System.IO
-import Foreign (allocaBytes, peek)
+import           Control.Monad
+import           Data.Bits
+import           Data.Int
+import           Data.Word
+import           Foreign               (allocaBytes, peek)
+import           System.IO
 
-import Data.Ratio              ((%), numerator)
-import Data.IORef              (atomicModifyIORef, newIORef)
-import Data.Time.Clock.POSIX   (getPOSIXTime)
-import System.CPUTime   (cpuTimePrecision, getCPUTime)
-import qualified Control.Exception as E
-import System.IO.Unsafe (unsafePerformIO)
+import qualified Control.Exception     as E
+import           Data.IORef            (atomicModifyIORef, newIORef)
+import           Data.Ratio            (numerator, (%))
+import           Data.Time.Clock.POSIX (getPOSIXTime)
+import           System.CPUTime        (cpuTimePrecision, getCPUTime)
+import           System.IO.Unsafe      (unsafePerformIO)
 
 class Monad m => Generator g m where
   uniform1 :: (Word32 -> a) -> g -> m a
   uniform2 :: (Word32 -> Word32 -> a) -> g -> m a
 
 class Variate a where
+  -- | Generate a uniformly distributed random vairate.
+  --
+  --   * Use entire range for integral types.
+  --
+  --   * Use (0,1] range for floating types.
   uniform  :: Generator g m => g -> m a
+
+  -- | Generate a uniformly distributed random vairate in the given
+  --   range.
+  --
+  --   * Use inclusive range for integral types.
+  --
+  --   * Use (a,b] range for floating types.
   uniformR :: Generator g m => (a,a) -> g -> m a
-  uniformB :: (Generator g m, Integral a) => a -> g -> m a
-  uniformB a g = uniformR (0,a) g
-  {-# INLINE uniformB #-}
 
--- Type family for fixed size integrals. For signed data types it's
--- its unsigned couterpart with same size and for unsigned data types
--- it's same type
-type family Unsigned a :: *
-
-type instance Unsigned Int8  = Word8
-type instance Unsigned Int16 = Word16
-type instance Unsigned Int32 = Word32
-type instance Unsigned Int64 = Word64
-
-type instance Unsigned Word8  = Word8
-type instance Unsigned Word16 = Word16
-type instance Unsigned Word32 = Word32
-type instance Unsigned Word64 = Word64
-
--- GHC-7.6 has a bug (#8072) which results in calculation of wrong
--- number of buckets in function `uniformRange'. Consequently uniformR
--- generates values in wrong range.
-#if (WORD_SIZE_IN_BITS < 64) && (__GLASGOW_HASKELL__ == 706)
-type instance Unsigned Int   = Word32
-type instance Unsigned Word  = Word32
-#else
-type instance Unsigned Int   = Word
-type instance Unsigned Word  = Word
-#endif
-
-uniformRange :: ( Generator g m
-                , Integral a, Bounded a, Variate a
-                , Integral (Unsigned a), Bounded (Unsigned a), Variate (Unsigned a))
-             => (a,a) -> g -> m a
-uniformRange (x1,x2) g
-  | n == 0    = uniform g   -- Abuse overflow in unsigned types
-  | otherwise = loop
-  where
-    -- Allow ranges where x2<x1
-    (i, j) | x1 < x2   = (x1, x2)
-           | otherwise = (x2, x1)
-    -- (# i, j #) | x1 < x2   = (# x1, x2 #)
-    --            | otherwise = (# x2, x1 #)
-    n       = 1 + sub j i
-    buckets = maxBound `div` n
-    maxN    = buckets * n
-    loop    = do x <- uniform g
-                 if x < maxN then return $! add i (x `div` buckets)
-                             else loop
-{-# INLINE uniformRange #-}
-
-sub :: (Integral a, Integral (Unsigned a)) => a -> a -> Unsigned a
-sub x y = fromIntegral x - fromIntegral y
-{-# INLINE sub #-}
-
-add :: (Integral a, Integral (Unsigned a)) => a -> Unsigned a -> a
-add m x = m + fromIntegral x
-{-# INLINE add #-}
+------------------------------------------------------------------------
+-- Variate instances
+------------------------------------------------------------------------
 
 instance Variate Int8 where
   uniform = uniform1 fromIntegral
@@ -111,19 +80,11 @@ instance Variate Int8 where
   uniformR a g = uniformRange a g
   {-# INLINE uniformR #-}
 
-uniformI8 :: Generator g m => g -> m Int8
-uniformI8 = uniform
-{-# INLINE uniformI8 #-}
-
 instance Variate Int16 where
   uniform  = uniform1 fromIntegral
   {-# INLINE uniform  #-}
   uniformR a g = uniformRange a g
   {-# INLINE uniformR #-}
-
-uniformI16 :: Generator g m => g -> m Int16
-uniformI16 = uniform
-{-# INLINE uniformI16 #-}
 
 instance Variate Int32 where
   uniform = uniform1 fromIntegral
@@ -131,19 +92,11 @@ instance Variate Int32 where
   uniformR a g = uniformRange a g
   {-# INLINE uniformR #-}
 
-uniformI32 :: Generator g m => g -> m Int32
-uniformI32 = uniform
-{-# INLINE uniformI32 #-}
-
 instance Variate Int64 where
   uniform = uniform2 wordsTo64Bit
-  uniformR a g = uniformRange a g
   {-# INLINE uniform  #-}
+  uniformR a g = uniformRange a g
   {-# INLINE uniformR #-}
-
-uniformI64 :: Generator g m => g -> m Int64
-uniformI64 = uniform
-{-# INLINE uniformI64 #-}
 
 instance Variate Word8 where
   uniform = uniform1 fromIntegral
@@ -151,19 +104,11 @@ instance Variate Word8 where
   uniformR a g = uniformRange a g
   {-# INLINE uniformR #-}
 
-uniformW8 :: Generator g m => g -> m Word8
-uniformW8 = uniform
-{-# INLINE uniformW8 #-}
-
 instance Variate Word16 where
   uniform = uniform1 fromIntegral
   {-# INLINE uniform  #-}
   uniformR a g = uniformRange a g
   {-# INLINE uniformR #-}
-
-uniformW16 :: Generator g m => g -> m Word16
-uniformW16 = uniform
-{-# INLINE uniformW16 #-}
 
 instance Variate Word32 where
   uniform = uniform1 fromIntegral
@@ -171,19 +116,11 @@ instance Variate Word32 where
   uniformR a g = uniformRange a g
   {-# INLINE uniformR #-}
 
-uniformW32 :: Generator g m => g -> m Word32
-uniformW32 = uniform
-{-# INLINE uniformW32 #-}
-
 instance Variate Word64 where
   uniform = uniform2 wordsTo64Bit
   {-# INLINE uniform  #-}
   uniformR a g = uniformRange a g
   {-# INLINE uniformR #-}
-
-uniformW64 :: Generator g m => g -> m Word64
-uniformW64 = uniform
-{-# INLINE uniformW64 #-}
 
 instance Variate Bool where
   uniform = uniform1 wordToBool
@@ -200,19 +137,11 @@ instance Variate Float where
   uniformR (x1,x2) = uniform1 (\w -> x1 + (x2-x1) * wordToFloat w)
   {-# INLINE uniformR #-}
 
-uniformF :: Generator g m => g -> m Float
-uniformF = uniform
-{-# INLINE uniformF #-}
-
 instance Variate Double where
   uniform = uniform2 wordsToDouble
   {-# INLINE uniform  #-}
   uniformR (x1,x2) = uniform2 (\w1 w2 -> x1 + (x2-x1) * wordsToDouble w1 w2)
   {-# INLINE uniformR #-}
-
-uniformD :: Generator g m => g -> m Double
-uniformD = uniform
-{-# INLINE uniformD #-}
 
 instance Variate Word where
 #if WORD_SIZE_IN_BITS < 64
@@ -254,6 +183,66 @@ instance (Variate a, Variate b, Variate c, Variate d) => Variate (a,b,c,d) where
     (,,,) `liftM` uniformR (x1,x2) g `ap` uniformR (y1,y2) g `ap`
                   uniformR (z1,z2) g `ap` uniformR (t1,t2) g
   {-# INLINE uniformR #-}
+
+------------------------------------------------------------------------
+-- Type restricted versions
+------------------------------------------------------------------------
+
+uniformI8 :: Generator g m => g -> m Int8
+uniformI8 = uniform
+{-# INLINE uniformI8 #-}
+
+uniformI16 :: Generator g m => g -> m Int16
+uniformI16 = uniform
+{-# INLINE uniformI16 #-}
+
+uniformI32 :: Generator g m => g -> m Int32
+uniformI32 = uniform
+{-# INLINE uniformI32 #-}
+
+uniformI64 :: Generator g m => g -> m Int64
+uniformI64 = uniform
+{-# INLINE uniformI64 #-}
+
+uniformW8 :: Generator g m => g -> m Word8
+uniformW8 = uniform
+{-# INLINE uniformW8 #-}
+
+uniformW16 :: Generator g m => g -> m Word16
+uniformW16 = uniform
+{-# INLINE uniformW16 #-}
+
+uniformW32 :: Generator g m => g -> m Word32
+uniformW32 = uniform
+{-# INLINE uniformW32 #-}
+
+uniformW64 :: Generator g m => g -> m Word64
+uniformW64 = uniform
+{-# INLINE uniformW64 #-}
+
+uniformBool :: Generator g m => g -> m Bool
+uniformBool = uniform
+{-# INLINE uniformBool #-}
+
+uniformF :: Generator g m => g -> m Float
+uniformF = uniform
+{-# INLINE uniformF #-}
+
+uniformD :: Generator g m => g -> m Double
+uniformD = uniform
+{-# INLINE uniformD #-}
+
+------------------------------------------------------------------------
+-- Utilities
+------------------------------------------------------------------------
+
+sub :: (Integral a, Integral (Unsigned a)) => a -> a -> Unsigned a
+sub x y = fromIntegral x - fromIntegral y
+{-# INLINE sub #-}
+
+add :: (Integral a, Integral (Unsigned a)) => a -> Unsigned a -> a
+add m x = m + fromIntegral x
+{-# INLINE add #-}
 
 wordsTo64Bit :: Integral a => Word32 -> Word32 -> a
 wordsTo64Bit x y =
@@ -299,8 +288,8 @@ acquireSeedTime = do
   let n    = fromIntegral (numerator t) :: Word64
   return $ wordsTo64Bit (fromIntegral c) (fromIntegral n)
 
--- | Get a random number from system source. If "/dev/urandom" is not
---   found return inferior random number from time.
+-- | Get a random number from system source. If \"@\/dev\/urandom@\" is
+--   not found return inferior random number from time.
 sysRandom :: IO Word64
 sysRandom =
   devRandom `E.catch` \(_ :: E.IOException) -> do
@@ -314,3 +303,49 @@ sysRandom =
     warned = unsafePerformIO $ newIORef False
     {-# NOINLINE warned #-}
 
+uniformRange :: ( Generator g m
+                , Integral a, Bounded a, Variate a
+                , Integral (Unsigned a), Bounded (Unsigned a), Variate (Unsigned a))
+             => (a,a) -> g -> m a
+uniformRange (x1,x2) g
+  | n == 0    = uniform g   -- Abuse overflow in unsigned types
+  | otherwise = loop
+  where
+    -- Allow ranges where x2<x1
+    (i, j) | x1 < x2   = (x1, x2)
+           | otherwise = (x2, x1)
+    -- (# i, j #) | x1 < x2   = (# x1, x2 #)
+    --            | otherwise = (# x2, x1 #)
+    n       = 1 + sub j i
+    buckets = maxBound `div` n
+    maxN    = buckets * n
+    loop    = do x <- uniform g
+                 if x < maxN then return $! add i (x `div` buckets)
+                             else loop
+{-# INLINE uniformRange #-}
+
+-- Type family for fixed size integrals. For signed data types it's
+-- its unsigned couterpart with same size and for unsigned data types
+-- it's same type
+type family Unsigned a :: *
+
+type instance Unsigned Int8  = Word8
+type instance Unsigned Int16 = Word16
+type instance Unsigned Int32 = Word32
+type instance Unsigned Int64 = Word64
+
+type instance Unsigned Word8  = Word8
+type instance Unsigned Word16 = Word16
+type instance Unsigned Word32 = Word32
+type instance Unsigned Word64 = Word64
+
+-- GHC-7.6 has a bug (#8072) which results in calculation of wrong
+-- number of buckets in function `uniformRange'. Consequently uniformR
+-- generates values in wrong range.
+#if (WORD_SIZE_IN_BITS < 64) && (__GLASGOW_HASKELL__ == 706)
+type instance Unsigned Int   = Word32
+type instance Unsigned Word  = Word32
+#else
+type instance Unsigned Int   = Word
+type instance Unsigned Word  = Word
+#endif

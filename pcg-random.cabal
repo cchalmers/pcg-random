@@ -1,25 +1,24 @@
 name:                pcg-random
 version:             0.1.0.0
-synopsis:            Haskell intreface to the PCG random number generator.
-description:         PCG is a family of simple fast space-efficient
-                     statistically good algorithms for random number
-                     generation with better-than-typical cryptographic
-                     security.
-                     .
-                     This library impliments bindings to the standard C
-                     implimentation.
-                     .
-                     There is a pure implimentation that can be used as a
-                     generator with the random package as well as a
-                     faster primitive (IO or ST) api that includes
-                     functions for generating common types (Double, Bool
-                     etc.) which is very similar to mwc-random.
-                     .
-                     The generators in this module are suitable for
-                     parallel but make sure threads don't share the same
-                     generator or things will go horrbly wrong.
+synopsis:            Haskell bindings to the PCG random number generator.
+description:
+  PCG is a family of simple fast space-efficient statistically good
+  algorithms for random number generation with better-than-typical
+  cryptographic security.
+  .
+  This library implements bindings to the standard C implementation.
+  This include the standard, unique, fast and single variants in the pcg
+  family. There is a pure implementation that can be used as a generator
+  with the random package as well as a faster primitive api that
+  includes functions for generating common types.
+  .
+  The generators in this module are suitable for use in parallel but
+  make sure threads don't share the same generator or things will go
+  horribly wrong.
+
 license:             BSD3
 license-file:        LICENSE
+extra-source-files:  README.md c/LICENSE.txt
 author:              Christopher Chalmers
 maintainer:          c.chalmers@me.com
 Homepage:            http://github.com/cchalmers/pcg-random
@@ -28,7 +27,8 @@ copyright:           (c) 2014. Christopher Chalmers <c.chalmers@me.com>
 category:            System
 build-type:          Simple
 cabal-version:       >=1.10
-Source-repository head
+
+source-repository head
   type:     git
   location: git://github.com/cchalmers/pcg-random.git
 
@@ -70,5 +70,6 @@ test-suite doctests
   type:             exitcode-stdio-1.0
   main-is:          doctest.hs
   hs-source-dirs:   test
-  build-depends:    base,
-                    doctest
+  build-depends:
+    base,
+    doctest
