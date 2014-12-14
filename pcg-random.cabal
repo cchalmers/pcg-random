@@ -52,7 +52,7 @@ library
     -DNDEBUG
     -O3 -finline-functions -fomit-frame-pointer
     -fno-strict-aliasing
-    -std=c99
+    -std=c99 -fPIC
 
   ghc-options:     -O2
 
