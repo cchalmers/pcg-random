@@ -9,7 +9,6 @@
 -- Maintainer : Christopher Chalmers <c.chalmers@me.com>
 -- Stability  : experimental
 -- Portability: CPP, FFI
--- Tested with: GHC 7.8.3
 --
 -- Unique variant of the PCG random number generator. Guarantees the
 -- sequence to be unique by using the pointer address to select the
@@ -19,17 +18,17 @@
 -- unique anymore. Also, generators can't be initialized in ST because
 -- we don't know what pointer reference they'll get.
 --
--- See http://www.pcg-random.org for details.
+-- See <http://www.pcg-random.org> for details.
 --
 -- @
 -- import System.Random.PCG.Unique
 --
--- three :: IO [Word32]
+-- three :: IO [Double]
 -- three = do
 --   g <- create
---   a <- uniformB 10 g
---   b <- uniformB 20 g
---   c <- uniformB 30 g
+--   a <- uniform g
+--   b <- uniform g
+--   c <- uniform g
 --   return [a,b,c]
 -- @
 
@@ -41,6 +40,11 @@ module System.Random.PCG.Unique
     -- * Getting random numbers
   , Variate (..)
   , advance, retract
+
+    -- * Type restricted versions
+  , uniformW8, uniformW16, uniformW32, uniformW64
+  , uniformI8, uniformI16, uniformI32, uniformI64
+  , uniformF, uniformD, uniformBool
   ) where
 
 import Data.Functor

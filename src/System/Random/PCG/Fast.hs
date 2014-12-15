@@ -14,24 +14,23 @@
 -- Maintainer : Christopher Chalmers <c.chalmers@me.com>
 -- Stability  : experimental
 -- Portability: CPP, FFI
--- Tested with: GHC 7.8.3
 --
 -- Fast variant of the PCG random number generator. This module performs
--- around 20% faster the multiple streams version but produces lower
--- quality (still good) random numbers.
+-- around 20% faster the multiple streams version but produces slightly
+-- lower quality (still good) random numbers.
 --
--- See http://www.pcg-random.org for details.
+-- See <http://www.pcg-random.org> for details.
 --
 -- @
 -- import Control.Monad.ST
 -- import System.Random.PCG.Fast
 --
--- three :: [Word32]
+-- three :: [Double]
 -- three = runST $ do
 --   g <- create
---   a <- uniformB 10 g
---   b <- uniformB 20 g
---   c <- uniformB 30 g
+--   a <- uniform g
+--   b <- uniform g
+--   c <- uniform g
 --   return [a,b,c]
 -- @
 module System.Random.PCG.Fast
@@ -45,6 +44,11 @@ module System.Random.PCG.Fast
 
     -- * Seeds
   , FrozenGen, save, restore, seed, initFrozen
+
+    -- * Type restricted versions
+  , uniformW8, uniformW16, uniformW32, uniformW64
+  , uniformI8, uniformI16, uniformI32, uniformI64
+  , uniformF, uniformD, uniformBool
   ) where
 
 import Control.Applicative

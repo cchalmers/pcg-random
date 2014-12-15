@@ -14,10 +14,9 @@
 -- Maintainer : Christopher Chalmers <c.chalmers@me.com>
 -- Stability  : experimental
 -- Portability: CPP, FFI
--- Tested with: GHC 7.8.3
 --
 -- Standard PCG Random Number Generator with chosen streams. See
--- http://www.pcg-random.org for details.
+-- <http://www.pcg-random.org> for details.
 --
 -- @
 -- import Control.Monad.ST
@@ -44,6 +43,11 @@ module System.Random.PCG
     -- * Frozen generator
   , FrozenGen
   , save, restore, seed, initFrozen
+
+    -- * Type restricted versions
+  , uniformW8, uniformW16, uniformW32, uniformW64
+  , uniformI8, uniformI16, uniformI32, uniformI64
+  , uniformF, uniformD, uniformBool
   ) where
 
 import Control.Applicative

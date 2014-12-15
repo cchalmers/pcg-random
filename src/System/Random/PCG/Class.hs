@@ -12,7 +12,6 @@
 -- Maintainer : Christopher Chalmers <c.chalmers@me.com>
 -- Stability  : experimental
 -- Portability: CPP
--- Tested with: GHC 7.8.3
 --
 -- Classes for working with random numbers along with utility functions.
 -- In a future release this module may disappear and use another module
