@@ -1,6 +1,7 @@
 ## pcg-random
 
 [![Build Status](https://travis-ci.org/cchalmers/pcg-random.svg)](https://travis-ci.org/cchalmers/pcg-random)
+[![Hackage](https://img.shields.io/hackage/v/pcg-random.svg)](https://hackage.haskell.org/package/pcg-random)
 
 Haskell bindings to the PCG random number generator http://www.pcg-random.org.
 
@@ -8,7 +9,7 @@ Haskell bindings to the PCG random number generator http://www.pcg-random.org.
 
 Implements the standard multiple stream generator as well as the fast, single and unique variants.
 
-The api is very similar to [mwc-random] but the pcg generator appears to be faster. There is also a pure interface via the [random] libray.
+The api is very similar to [mwc-random] but the pcg generator appears to be slightly faster. There is also a pure interface via the [random] libray.
 
 [mwc-random]: https://hackage.haskell.org/package/mwc-random
 [random]: http://hackage.haskell.org/package/random
