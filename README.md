@@ -1,7 +1,7 @@
 ## pcg-random
 
 [![Build Status](https://travis-ci.org/cchalmers/pcg-random.svg)](https://travis-ci.org/cchalmers/pcg-random)
-[![Hackage](https://img.shields.io/hackage/v/pcg-random.svg)](https://hackage.haskell.org/package/pcg-random)
+[![Hackage](https://img.shields.io/hackage/v/pcg-random.svg?style=flat)](https://hackage.haskell.org/package/pcg-random)
 
 Haskell bindings to the PCG random number generator http://www.pcg-random.org.
 
