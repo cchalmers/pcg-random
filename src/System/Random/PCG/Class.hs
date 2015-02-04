@@ -35,6 +35,10 @@ module System.Random.PCG.Class
   , sysRandom
   ) where
 
+#if defined(__GLASGOW_HASKELL__) && !defined(__HADDOCK__)
+#include "MachDeps.h"
+#endif
+
 import           Control.Monad
 import           Data.Bits
 import           Data.Int
