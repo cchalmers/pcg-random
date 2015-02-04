@@ -1,5 +1,5 @@
 name:                pcg-random
-version:             0.1.0.0
+version:             0.1.0.1
 synopsis:            Haskell bindings to the PCG random number generator.
 description:
   PCG is a family of simple fast space-efficient statistically good
@@ -18,7 +18,7 @@ description:
 
 license:             BSD3
 license-file:        LICENSE
-extra-source-files:  README.md c/LICENSE.txt
+extra-source-files:  README.md CHANGELOG.md c/LICENSE.txt
 author:              Christopher Chalmers
 maintainer:          c.chalmers@me.com
 Homepage:            http://github.com/cchalmers/pcg-random
