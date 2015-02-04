@@ -1,4 +1,6 @@
 {-# LANGUAGE CPP                        #-}
+{-# LANGUAGE DeriveDataTypeable         #-}
+{-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE ForeignFunctionInterface   #-}
 {-# LANGUAGE TypeFamilies               #-}
@@ -16,7 +18,7 @@
 -- Portability: CPP, FFI
 --
 -- Fast variant of the PCG random number generator. This module performs
--- around 20% faster the multiple streams version but produces slightly
+-- around 20% faster than the multiple streams version but produces slightly
 -- lower quality (still good) random numbers.
 --
 -- See <http://www.pcg-random.org> for details.
@@ -53,7 +55,9 @@ module System.Random.PCG.Fast
 
 import Control.Applicative
 import Control.Monad.Primitive
+import Data.Data
 import Foreign
+import GHC.Generics
 import System.IO.Unsafe
 import System.Random
 
@@ -68,8 +72,10 @@ import System.Random.PCG.Class
 -- Seed
 ------------------------------------------------------------------------
 
+-- | Immutable state of a random number generator. Suitable for storing
+--   for later use.
 newtype FrozenGen = FrozenGen Word64
-  deriving (Show, Eq, Ord, Storable)
+  deriving (Show, Eq, Ord, Storable, Data, Typeable, Generic)
 
 -- | Save the state of a 'Gen' in a 'Seed'.
 save :: PrimMonad m => Gen (PrimState m) -> m FrozenGen

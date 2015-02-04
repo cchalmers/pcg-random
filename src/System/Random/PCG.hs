@@ -1,4 +1,6 @@
 {-# LANGUAGE CPP                        #-}
+{-# LANGUAGE DeriveDataTypeable         #-}
+{-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE ForeignFunctionInterface   #-}
 {-# LANGUAGE TypeFamilies               #-}
@@ -50,9 +52,11 @@ module System.Random.PCG
   , uniformF, uniformD, uniformBool
   ) where
 
+import Data.Data
 import Control.Applicative
 import Control.Monad.Primitive
 import Foreign
+import GHC.Generics
 import System.IO.Unsafe
 import System.Random
 
@@ -69,7 +73,7 @@ import System.Random.PCG.Class
 
 -- | Immutable snapshot of the state of a 'Gen'.
 data FrozenGen = FrozenGen {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word64
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq, Ord, Data, Typeable, Generic)
 
 -- | Save the state of a 'Gen' in a 'FrozenGen'.
 save :: PrimMonad m => Gen (PrimState m) -> m FrozenGen

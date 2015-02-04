@@ -1,4 +1,6 @@
 {-# LANGUAGE CPP                        #-}
+{-# LANGUAGE DeriveDataTypeable         #-}
+{-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE ForeignFunctionInterface   #-}
 {-# LANGUAGE TypeFamilies               #-}
@@ -52,9 +54,12 @@ module System.Random.PCG.Single
 
 import Control.Applicative
 import Control.Monad.Primitive
+import Data.Data
 import Foreign
+import GHC.Generics
 import System.IO.Unsafe
 import System.Random
+
 import System.Random.PCG.Class
 
 -- $setup
@@ -67,7 +72,7 @@ import System.Random.PCG.Class
 ------------------------------------------------------------------------
 
 newtype FrozenGen = FrozenGen Word64
-  deriving (Show, Eq, Ord, Storable)
+  deriving (Show, Eq, Ord, Storable, Data, Typeable, Generic)
 
 -- | Save the state of a 'Gen' in a 'Seed'.
 save :: PrimMonad m => Gen (PrimState m) -> m FrozenGen
