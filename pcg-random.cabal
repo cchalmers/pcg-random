@@ -55,6 +55,7 @@ library
     -std=c99 -fPIC
 
   c-sources:
+    c/pcg-advance-128.c
     c/pcg-advance-64.c
     c/pcg-global-64.c
     c/pcg-output-64.c
