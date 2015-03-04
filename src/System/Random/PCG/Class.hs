@@ -106,7 +106,7 @@ fastUniformB :: (Generator g m, Integral a) => a -> g -> m a
 fastUniformB b g = do
   let b' = fromIntegral b
   x <- uniformF g
-  return $! floor (x * b')
+  return $! floor (x - 1.16415321826934814453125e-10 * b')
 -- Specialize pragma is VERY important. Without it this function goes from
 -- taking 2.3ns to 60ns. Other functions don't appear to need it.
 {-# SPECIALISE fastUniformB :: Generator g m => Word32 -> g -> m Word32 #-}
