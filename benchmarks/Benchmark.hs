@@ -31,6 +31,7 @@ main = do
       , benchIO "Word32R" (F.uniformR (0,10000) pcgF :: IO Word32)
       , benchIO "Word32B" (F.uniformB 10000 pcgF :: IO Word32)
       , benchIO "Word64B" (F.uniformB 10000 pcgF :: IO Word64)
+      , benchIO "IntBViaFloat" (viaFloat 10000 pcgF :: IO Int)
       , benchIO "rs-Word64" (F.uniform pcgF :: IO Word64)
       , benchIO "rs-Double" (F.uniform pcgF :: IO Double)
       ]
@@ -57,3 +58,9 @@ main = do
     --   -- , bench "Int" (M.random mtg :: IO Int)
     --   ]
     ]
+
+viaFloat :: Int -> F.GenIO -> IO Int
+viaFloat b g = do
+  let b' = fromIntegral b
+  x <- F.uniformF g
+  return $! floor (x * b')
