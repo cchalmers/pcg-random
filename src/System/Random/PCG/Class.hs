@@ -22,9 +22,20 @@ module System.Random.PCG.Class
   , Variate (..)
 
     -- * Type restricted versions
+    -- ** uniform
   , uniformW8, uniformW16, uniformW32, uniformW64
   , uniformI8, uniformI16, uniformI32, uniformI64
   , uniformF, uniformD, uniformBool
+
+    -- ** uniformR
+  , uniformRW8, uniformRW16, uniformRW32, uniformRW64
+  , uniformRI8, uniformRI16, uniformRI32, uniformRI64
+  , uniformRF, uniformRD, uniformRBool
+
+    -- ** uniformB
+  , uniformBW8, uniformBW16, uniformBW32, uniformBW64
+  , uniformBI8, uniformBI16, uniformBI32, uniformBI64
+  , uniformBF, uniformBD, uniformBBool
 
    -- * Utilities
   , Unsigned
@@ -233,6 +244,8 @@ instance (Variate a, Variate b, Variate c, Variate d) => Variate (a,b,c,d) where
 -- Type restricted versions
 ------------------------------------------------------------------------
 
+-- uniform -------------------------------------------------------------
+
 uniformI8 :: Generator g m => g -> m Int8
 uniformI8 = uniform
 {-# INLINE uniformI8 #-}
@@ -276,6 +289,98 @@ uniformF = uniform
 uniformD :: Generator g m => g -> m Double
 uniformD = uniform
 {-# INLINE uniformD #-}
+
+-- uniformR ------------------------------------------------------------
+
+uniformRI8 :: Generator g m => (Int8, Int8) -> g -> m Int8
+uniformRI8 = uniformR
+{-# INLINE uniformRI8 #-}
+
+uniformRI16 :: Generator g m => (Int16, Int16) -> g -> m Int16
+uniformRI16 = uniformR
+{-# INLINE uniformRI16 #-}
+
+uniformRI32 :: Generator g m => (Int32, Int32) -> g -> m Int32
+uniformRI32 = uniformR
+{-# INLINE uniformRI32 #-}
+
+uniformRI64 :: Generator g m => (Int64, Int64) -> g -> m Int64
+uniformRI64 = uniformR
+{-# INLINE uniformRI64 #-}
+
+uniformRW8 :: Generator g m => (Word8, Word8) -> g -> m Word8
+uniformRW8 = uniformR
+{-# INLINE uniformRW8 #-}
+
+uniformRW16 :: Generator g m => (Word16, Word16) -> g -> m Word16
+uniformRW16 = uniformR
+{-# INLINE uniformRW16 #-}
+
+uniformRW32 :: Generator g m => (Word32, Word32) -> g -> m Word32
+uniformRW32 = uniformR
+{-# INLINE uniformRW32 #-}
+
+uniformRW64 :: Generator g m => (Word64, Word64) -> g -> m Word64
+uniformRW64 = uniformR
+{-# INLINE uniformRW64 #-}
+
+uniformRBool :: Generator g m => (Bool, Bool) -> g -> m Bool
+uniformRBool = uniformR
+{-# INLINE uniformRBool #-}
+
+uniformRF :: Generator g m => (Float, Float) -> g -> m Float
+uniformRF = uniformR
+{-# INLINE uniformRF #-}
+
+uniformRD :: Generator g m => (Double, Double) -> g -> m Double
+uniformRD = uniformR
+{-# INLINE uniformRD #-}
+
+-- uniformB ------------------------------------------------------------
+
+uniformBI8 :: Generator g m => Int8 -> g -> m Int8
+uniformBI8 = uniformB
+{-# INLINE uniformBI8 #-}
+
+uniformBI16 :: Generator g m => Int16 -> g -> m Int16
+uniformBI16 = uniformB
+{-# INLINE uniformBI16 #-}
+
+uniformBI32 :: Generator g m => Int32 -> g -> m Int32
+uniformBI32 = uniformB
+{-# INLINE uniformBI32 #-}
+
+uniformBI64 :: Generator g m => Int64 -> g -> m Int64
+uniformBI64 = uniformB
+{-# INLINE uniformBI64 #-}
+
+uniformBW8 :: Generator g m => Word8 -> g -> m Word8
+uniformBW8 = uniformB
+{-# INLINE uniformBW8 #-}
+
+uniformBW16 :: Generator g m => Word16 -> g -> m Word16
+uniformBW16 = uniformB
+{-# INLINE uniformBW16 #-}
+
+uniformBW32 :: Generator g m => Word32 -> g -> m Word32
+uniformBW32 = uniformB
+{-# INLINE uniformBW32 #-}
+
+uniformBW64 :: Generator g m => Word64 -> g -> m Word64
+uniformBW64 = uniformB
+{-# INLINE uniformBW64 #-}
+
+uniformBBool :: Generator g m => Bool -> g -> m Bool
+uniformBBool = uniformB
+{-# INLINE uniformBBool #-}
+
+uniformBF :: Generator g m => Float -> g -> m Float
+uniformBF = uniformB
+{-# INLINE uniformBF #-}
+
+uniformBD :: Generator g m => Double -> g -> m Double
+uniformBD = uniformB
+{-# INLINE uniformBD #-}
 
 ------------------------------------------------------------------------
 -- Utilities

@@ -48,9 +48,20 @@ module System.Random.PCG.Fast
   , FrozenGen, save, restore, seed, initFrozen
 
     -- * Type restricted versions
+    -- ** uniform
   , uniformW8, uniformW16, uniformW32, uniformW64
   , uniformI8, uniformI16, uniformI32, uniformI64
   , uniformF, uniformD, uniformBool
+
+    -- ** uniformR
+  , uniformRW8, uniformRW16, uniformRW32, uniformRW64
+  , uniformRI8, uniformRI16, uniformRI32, uniformRI64
+  , uniformRF, uniformRD, uniformRBool
+
+    -- ** uniformB
+  , uniformBW8, uniformBW16, uniformBW32, uniformBW64
+  , uniformBI8, uniformBI16, uniformBI32, uniformBI64
+  , uniformBF, uniformBD, uniformBBool
   ) where
 
 import Control.Applicative
