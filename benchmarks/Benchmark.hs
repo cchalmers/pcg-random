@@ -28,7 +28,9 @@ main = do
     --   ]
     [ bgroup "pcg-fast"
       [ benchIO "Word32" (F.uniform pcgF :: IO Word32)
-      -- , benchIO "rs-Word32" (F.getRandomWord32From pcgF :: IO Word32)
+      , benchIO "Word32R" (F.uniformR (0,10000) pcgF :: IO Word32)
+      , benchIO "Word32B" (F.uniformB 10000 pcgF :: IO Word32)
+      , benchIO "Word64B" (F.uniformB 10000 pcgF :: IO Word64)
       , benchIO "rs-Word64" (F.uniform pcgF :: IO Word64)
       , benchIO "rs-Double" (F.uniform pcgF :: IO Double)
       ]
@@ -40,6 +42,7 @@ main = do
     --   ]
     , bgroup "mwc"
       [ benchIO "Word64" (MWC.uniform mwc :: IO Word64)
+      , benchIO "Word32R" (MWC.uniformR (0,10000) mwc :: IO Word32)
       , benchIO "Double" (MWC.uniform mwc :: IO Double)
       -- , bench "Int"    (uniform mwc :: IO Int)
       ]
@@ -48,9 +51,9 @@ main = do
     --   , benchIO "Double" (R.randomIO >>= evaluate :: IO Double)
     --   , benchIO "Int"    (R.randomIO >>= evaluate :: IO Int)
     --   ]
-    , bgroup "mersenne"
-      [ benchIO "Word64" (M.random mtg :: IO Word64)
-      , benchIO "Double" (M.random mtg :: IO Double)
-      -- , bench "Int" (M.random mtg :: IO Int)
-      ]
+    -- , bgroup "mersenne"
+    --   [ benchIO "Word64" (M.random mtg :: IO Word64)
+    --   , benchIO "Double" (M.random mtg :: IO Double)
+    --   -- , bench "Int" (M.random mtg :: IO Int)
+    --   ]
     ]

@@ -56,6 +56,7 @@ import           System.IO.Unsafe      (unsafePerformIO)
 class Monad m => Generator g m where
   uniform1 :: (Word32 -> a) -> g -> m a
   uniform2 :: (Word32 -> Word32 -> a) -> g -> m a
+  uniform1B :: Integral a => (Word32 -> a) -> Word32 -> g -> m a
 
 class Variate a where
   -- | Generate a uniformly distributed random vairate.
@@ -73,6 +74,12 @@ class Variate a where
   --   * Use (a,b] range for floating types.
   uniformR :: Generator g m => (a,a) -> g -> m a
 
+  -- | Generate a uniformly distributed random vairate in the range
+  --   [0,b). For integral types the bound must be less than the max bound
+  --   of 'Word32' (4294967295). Behaviour is undefined for negative
+  --   bounds.
+  uniformB :: Generator g m => a -> g -> m a
+
 ------------------------------------------------------------------------
 -- Variate instances
 ------------------------------------------------------------------------
@@ -82,48 +89,64 @@ instance Variate Int8 where
   {-# INLINE uniform  #-}
   uniformR a g = uniformRange a g
   {-# INLINE uniformR #-}
+  uniformB b g = uniform1B fromIntegral (fromIntegral b) g
+  {-# INLINE uniformB #-}
 
 instance Variate Int16 where
   uniform  = uniform1 fromIntegral
   {-# INLINE uniform  #-}
   uniformR a g = uniformRange a g
   {-# INLINE uniformR #-}
+  uniformB b g = uniform1B fromIntegral (fromIntegral b) g
+  {-# INLINE uniformB #-}
 
 instance Variate Int32 where
   uniform = uniform1 fromIntegral
   {-# INLINE uniform  #-}
   uniformR a g = uniformRange a g
   {-# INLINE uniformR #-}
+  uniformB b g = uniform1B fromIntegral (fromIntegral b) g
+  {-# INLINE uniformB #-}
 
 instance Variate Int64 where
   uniform = uniform2 wordsTo64Bit
   {-# INLINE uniform  #-}
   uniformR a g = uniformRange a g
   {-# INLINE uniformR #-}
+  uniformB b g = uniform1B fromIntegral (fromIntegral b) g
+  {-# INLINE uniformB #-}
 
 instance Variate Word8 where
   uniform = uniform1 fromIntegral
   {-# INLINE uniform  #-}
   uniformR a g = uniformRange a g
   {-# INLINE uniformR #-}
+  uniformB b g = uniform1B fromIntegral (fromIntegral b) g
+  {-# INLINE uniformB #-}
 
 instance Variate Word16 where
   uniform = uniform1 fromIntegral
   {-# INLINE uniform  #-}
   uniformR a g = uniformRange a g
   {-# INLINE uniformR #-}
+  uniformB b g = uniform1B fromIntegral (fromIntegral b) g
+  {-# INLINE uniformB #-}
 
 instance Variate Word32 where
   uniform = uniform1 fromIntegral
   {-# INLINE uniform  #-}
   uniformR a g = uniformRange a g
   {-# INLINE uniformR #-}
+  uniformB b g = uniform1B fromIntegral (fromIntegral b) g
+  {-# INLINE uniformB #-}
 
 instance Variate Word64 where
   uniform = uniform2 wordsTo64Bit
   {-# INLINE uniform  #-}
   uniformR a g = uniformRange a g
   {-# INLINE uniformR #-}
+  uniformB b g = uniform1B fromIntegral (fromIntegral b) g
+  {-# INLINE uniformB #-}
 
 instance Variate Bool where
   uniform = uniform1 wordToBool
@@ -133,18 +156,27 @@ instance Variate Bool where
   uniformR (True,True)   _ = return True
   uniformR (True,False)  g = uniform g
   {-# INLINE uniformR #-}
+  uniformB False _ = return False
+  uniformB _     g = uniform g
+  {-# INLINE uniformB #-}
 
 instance Variate Float where
   uniform = uniform1 wordToFloat
   {-# INLINE uniform  #-}
   uniformR (x1,x2) = uniform1 (\w -> x1 + (x2-x1) * wordToFloat w)
   {-# INLINE uniformR #-}
+  -- subtract 2**(-33) to go from (0,b] to [0,b) (I think)
+  uniformB b g = (subtract 1.16415321826934814453125e-10) `liftM` uniformR (0,b) g
+  {-# INLINE uniformB #-}
 
 instance Variate Double where
   uniform = uniform2 wordsToDouble
   {-# INLINE uniform  #-}
   uniformR (x1,x2) = uniform2 (\w1 w2 -> x1 + (x2-x1) * wordsToDouble w1 w2)
   {-# INLINE uniformR #-}
+  -- subtract 2**(-53) to go from (0,b] to [0,b) (I think)
+  uniformB b g = (subtract 1.1102230246251565404236316680908203125e-16) `liftM` uniformR (0,b) g
+  {-# INLINE uniformB #-}
 
 instance Variate Word where
 #if WORD_SIZE_IN_BITS < 64
@@ -155,6 +187,8 @@ instance Variate Word where
   {-# INLINE uniform  #-}
   uniformR a g = uniformRange a g
   {-# INLINE uniformR #-}
+  uniformB b g = uniform1B fromIntegral (fromIntegral b) g
+  {-# INLINE uniformB #-}
 
 instance Variate Int where
 #if WORD_SIZE_IN_BITS < 64
@@ -165,12 +199,16 @@ instance Variate Int where
   {-# INLINE uniform  #-}
   uniformR a g = uniformRange a g
   {-# INLINE uniformR #-}
+  uniformB b g = uniform1B fromIntegral (fromIntegral b) g
+  {-# INLINE uniformB #-}
 
 instance (Variate a, Variate b) => Variate (a,b) where
   uniform g = (,) `liftM` uniform g `ap` uniform g
   {-# INLINE uniform  #-}
   uniformR ((x1,y1),(x2,y2)) g = (,) `liftM` uniformR (x1,x2) g `ap` uniformR (y1,y2) g
   {-# INLINE uniformR #-}
+  uniformB (b1,b2) g = (,) `liftM` uniformB b1 g `ap` uniformB b2 g
+  {-# INLINE uniformB #-}
 
 instance (Variate a, Variate b, Variate c) => Variate (a,b,c) where
   uniform g = (,,) `liftM` uniform g `ap` uniform g `ap` uniform g
@@ -178,6 +216,8 @@ instance (Variate a, Variate b, Variate c) => Variate (a,b,c) where
   uniformR ((x1,y1,z1),(x2,y2,z2)) g =
     (,,) `liftM` uniformR (x1,x2) g `ap` uniformR (y1,y2) g `ap` uniformR (z1,z2) g
   {-# INLINE uniformR #-}
+  uniformB (b1,b2,b3) g = (,,) `liftM` uniformB b1 g `ap` uniformB b2 g `ap` uniformB b3 g
+  {-# INLINE uniformB #-}
 
 instance (Variate a, Variate b, Variate c, Variate d) => Variate (a,b,c,d) where
   uniform g = (,,,) `liftM` uniform g `ap` uniform g `ap` uniform g `ap` uniform g
@@ -186,6 +226,8 @@ instance (Variate a, Variate b, Variate c, Variate d) => Variate (a,b,c,d) where
     (,,,) `liftM` uniformR (x1,x2) g `ap` uniformR (y1,y2) g `ap`
                   uniformR (z1,z2) g `ap` uniformR (t1,t2) g
   {-# INLINE uniformR #-}
+  uniformB (b1,b2,b3,b4) g = (,,,) `liftM` uniformB b1 g `ap` uniformB b2 g `ap` uniformB b3 g `ap` uniformB b4 g
+  {-# INLINE uniformB #-}
 
 ------------------------------------------------------------------------
 -- Type restricted versions

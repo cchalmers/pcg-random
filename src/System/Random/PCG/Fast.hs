@@ -185,8 +185,8 @@ foreign import ccall unsafe "pcg_mcg_64_srandom_r"
 foreign import ccall unsafe "pcg_mcg_64_xsh_rs_32_random_r"
   pcg32f_random_r :: Ptr FrozenGen -> IO Word32
 
--- foreign import ccall unsafe "pcg_mcg_64_xsh_rs_32_boundedrand_r"
---   pcg32f_boundedrand_r :: Ptr FrozenGen -> Word32 -> IO Word32
+foreign import ccall unsafe "pcg_mcg_64_xsh_rs_32_boundedrand_r"
+  pcg32f_boundedrand_r :: Ptr FrozenGen -> Word32 -> IO Word32
 
 foreign import ccall unsafe "pcg_mcg_64_advance_r"
   pcg32f_advance_r :: Ptr FrozenGen -> Word64 -> IO ()
@@ -204,6 +204,9 @@ instance (PrimMonad m, s ~ PrimState m) => Generator (Gen s) m where
     w2 <- pcg32f_random_r p
     return $ f w1 w2
   {-# INLINE uniform2 #-}
+
+  uniform1B f b (Gen p) = unsafePrimToPrim $ f <$> pcg32f_boundedrand_r p b
+  {-# INLINE uniform1B #-}
 
 instance RandomGen FrozenGen where
   next s = unsafeDupablePerformIO $ do

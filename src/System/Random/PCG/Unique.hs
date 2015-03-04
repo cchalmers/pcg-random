@@ -121,8 +121,8 @@ foreign import ccall unsafe "pcg_unique_64_srandom_r"
 foreign import ccall unsafe "pcg_unique_64_xsh_rs_32_random_r"
   pcg32u_random_r :: Ptr Word64 -> IO Word32
 
--- foreign import ccall unsafe "pcg_unique_64_xsh_rs_32_boundedrand_r"
---   pcg32u_boundedrand_r :: Ptr Word64 -> Word32 -> IO Word32
+foreign import ccall unsafe "pcg_unique_64_xsh_rs_32_boundedrand_r"
+  pcg32u_boundedrand_r :: Ptr Word64 -> Word32 -> IO Word32
 
 foreign import ccall unsafe "pcg_unique_64_advance_r"
   pcg32u_advance_r :: Ptr Word64 -> Word64 -> IO ()
@@ -140,3 +140,7 @@ instance Generator Gen IO where
     w2 <- pcg32u_random_r p
     return $ f w1 w2
   {-# INLINE uniform2 #-}
+
+  uniform1B f b (Gen p) = f <$> pcg32u_boundedrand_r p b
+  {-# INLINE uniform1B #-}
+
