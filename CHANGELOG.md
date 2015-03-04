@@ -5,8 +5,6 @@
 
 * Add type specific versions for uniformR and uniformB.
 
-* Add experimental fastUniformB
-
 ### 0.1.0.1
 
 * Fix bug when dealing with `Word` and `Int` types.

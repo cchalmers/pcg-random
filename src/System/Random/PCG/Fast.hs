@@ -39,7 +39,6 @@ module System.Random.PCG.Fast
   ( -- * Gen
     Gen, GenIO, GenST
   , create, createSystemRandom, initialize, withSystemRandom
-  , fastUniformB
 
     -- * Getting random numbers
   , Variate (..)

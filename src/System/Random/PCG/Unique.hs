@@ -36,7 +36,6 @@ module System.Random.PCG.Unique
   ( -- * Gen
     Gen
   , create, createSystemRandom, initialize, withSystemRandom
-  , fastUniformB
 
     -- * Getting random numbers
   , Variate (..)
