@@ -20,6 +20,7 @@ module System.Random.PCG.Class
   ( -- * Classes
     Generator (..)
   , Variate (..)
+  , fastUniformB
 
     -- * Type restricted versions
     -- ** uniform
@@ -89,7 +90,35 @@ class Variate a where
   --   [0,b). For integral types the bound must be less than the max bound
   --   of 'Word32' (4294967295). Behaviour is undefined for negative
   --   bounds.
+  --
+  --   This is generally faster than uniformR (0,b-1) by almost a factor
+  --   of two for integral types..
   uniformB :: Generator g m => a -> g -> m a
+
+-- | (experimental) A faster uniformB for integrals. A random float is
+--   made and multiplied by the bound and then floored. The quality for
+--   large bounds is unknown.
+--
+--   In the best case this can perform about 3x faster than uniformB.
+--   (Although if used with a non-standard integral type it could
+--   perform 8x slower. If in doubt, benchmark!)
+fastUniformB :: (Generator g m, Integral a) => a -> g -> m a
+fastUniformB b g = do
+  let b' = fromIntegral b
+  x <- uniformF g
+  return $! floor (x * b')
+-- Specialize pragma is VERY important. Without it this function goes from
+-- taking 2.3ns to 60ns. Other functions don't appear to need it.
+{-# SPECIALISE fastUniformB :: Generator g m => Word32 -> g -> m Word32 #-}
+{-# SPECIALISE fastUniformB :: Generator g m => Int    -> g -> m Int #-}
+{-# SPECIALISE fastUniformB :: Generator g m => Int8   -> g -> m Int8 #-}
+{-# SPECIALISE fastUniformB :: Generator g m => Int16  -> g -> m Int16 #-}
+{-# SPECIALISE fastUniformB :: Generator g m => Int32  -> g -> m Int32 #-}
+{-# SPECIALISE fastUniformB :: Generator g m => Int64  -> g -> m Int64 #-}
+{-# SPECIALISE fastUniformB :: Generator g m => Word   -> g -> m Word #-}
+{-# SPECIALISE fastUniformB :: Generator g m => Word8  -> g -> m Word8 #-}
+{-# SPECIALISE fastUniformB :: Generator g m => Word16 -> g -> m Word16 #-}
+{-# SPECIALISE fastUniformB :: Generator g m => Word64 -> g -> m Word64 #-}
 
 ------------------------------------------------------------------------
 -- Variate instances

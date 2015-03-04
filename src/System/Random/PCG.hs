@@ -37,6 +37,7 @@ module System.Random.PCG
   ( -- * Generator
     Gen, GenIO, GenST
   , create, createSystemRandom, initialize, withSystemRandom
+  , fastUniformB
 
     -- * Getting random numbers
   , Variate (..)
