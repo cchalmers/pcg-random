@@ -37,6 +37,7 @@ library
     System.Random.PCG
     System.Random.PCG.Class
     System.Random.PCG.Fast
+    System.Random.PCG.Fast.Pure
     System.Random.PCG.Unique
     System.Random.PCG.Single
   hs-source-dirs:      src
