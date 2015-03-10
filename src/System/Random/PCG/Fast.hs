@@ -156,11 +156,6 @@ withSystemRandom f = do
 createSystemRandom :: IO GenIO
 createSystemRandom = withSystemRandom (return :: GenIO -> IO GenIO)
 
--- -- | Generate a uniform 'Word32' bounded by the given bound.
--- uniformB :: PrimMonad m => Word32 -> Gen (PrimState m) -> m Word32
--- uniformB u (Gen p) = unsafePrimToPrim $ pcg32f_boundedrand_r p u
--- {-# INLINE uniformB #-}
-
 -- | Advance the given generator n steps in log(n) time. (Note that a
 --   \"step\" is a single random 32-bit (or less) 'Variate'. Data types
 --   such as 'Double' or 'Word64' require two \"steps\".)
