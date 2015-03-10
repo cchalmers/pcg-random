@@ -1,10 +1,11 @@
 name:                pcg-random
-version:             0.1.0.1
+version:             0.1.1.0
 synopsis:            Haskell bindings to the PCG random number generator.
 description:
   PCG is a family of simple fast space-efficient statistically good
   algorithms for random number generation with better-than-typical
-  cryptographic security.
+  cryptographic security. See http://http://www.pcg-random.org for more
+  information.
   .
   This library implements bindings to the standard C implementation.
   This includes the standard, unique, fast and single variants in the
