@@ -12,7 +12,7 @@
 --------------------------------------------------------------------
 -- |
 -- Module     : System.Random.PCG.Single
--- Copyright  : Copyright (c) 2014, Christopher Chalmers <c.chalmers@me.com>
+-- Copyright  : Copyright (c) 2014-2015, Christopher Chalmers <c.chalmers@me.com>
 -- License    : BSD3
 -- Maintainer : Christopher Chalmers <c.chalmers@me.com>
 -- Stability  : experimental
