@@ -225,10 +225,10 @@ initialize a = restore (initFrozen a)
 
 -- | Seed with system random number. (\"@\/dev\/urandom@\" on Unix-like
 --   systems, time otherwise).
-withSystemRandom :: PrimMonad m => (Gen (PrimState m) -> m a) -> IO a
+withSystemRandom :: (GenIO -> IO a) -> IO a
 withSystemRandom f = do
   w <- sysRandom
-  unsafePrimToIO $ initialize w >>= f
+  initialize w >>= f
 
 -- | Seed a PRNG with data from the system's fast source of pseudo-random
 -- numbers. All the caveats of 'withSystemRandom' apply here as well.
