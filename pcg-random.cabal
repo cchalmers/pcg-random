@@ -41,6 +41,7 @@ library
     System.Random.PCG.Unique
     System.Random.PCG.Single
   hs-source-dirs:      src
+  ghc-options:         -Wall
   other-extensions:    BangPatterns, CPP, ForeignFunctionInterface
   build-depends:
     base      >=4.3 && < 5,
