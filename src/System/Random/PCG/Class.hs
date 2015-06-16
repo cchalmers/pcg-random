@@ -416,7 +416,7 @@ wordsToDouble x y  = (fromIntegral u * m_inv_32 + (0.5 + m_inv_53) +
 
 -- IO randoms
 
--- | Generate a random number using 'System.Entropy'.
+-- | Generate a random number using "System.Entropy".
 --
 --   Use RDRAND if available and XOR with @\/dev\/urandom@ on Unix and
 --   CryptAPI on Windows. This entropy is considered cryptographically
