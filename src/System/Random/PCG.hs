@@ -3,8 +3,9 @@
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE ForeignFunctionInterface   #-}
-{-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE TypeFamilies               #-}
 #if __GLASGOW_HASKELL__ >= 707
 {-# LANGUAGE RoleAnnotations            #-}
 #endif
@@ -36,7 +37,8 @@
 module System.Random.PCG
   ( -- * Generator
     Gen, GenIO, GenST
-  , create, createSystemRandom, initialize, withSystemRandom
+  , create, createSystemRandom, initialize
+  , withSystemRandom, withFrozen
 
     -- * Getting random numbers
   , Variate (..)
@@ -63,10 +65,9 @@ module System.Random.PCG
   , uniformBF, uniformBD, uniformBBool
   ) where
 
-#if __GLASGOW_HASKELL__ < 710
 import Control.Applicative
-#endif
 import Control.Monad.Primitive
+import Control.Monad.ST
 import Data.Data
 import Foreign
 import GHC.Generics
@@ -172,6 +173,11 @@ withSystemRandom f = do
   w1 <- sysRandom
   w2 <- sysRandom
   initialize w1 w2 >>= f
+
+-- | Run an action with a frozen generator, returning the result and the
+--   new frozen generator.
+withFrozen :: FrozenGen -> (forall s. Gen s -> ST s a) -> (a, FrozenGen)
+withFrozen s f = runST $ restore s >>= \g -> liftA2 (,) (f g) (save g)
 
 -- | Seed a PRNG with data from the system's fast source of pseudo-random
 -- numbers. All the caveats of 'withSystemRandom' apply here as well.
