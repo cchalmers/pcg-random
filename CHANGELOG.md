@@ -1,3 +1,8 @@
+### 0.1.3.0
+
+* Use [entropy](http://hackage.haskell.org/package/entropy) package for
+  system random generator.
+
 ### 0.1.2.0
 
 * Allow primitive-0.6.

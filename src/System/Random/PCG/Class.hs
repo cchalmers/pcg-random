@@ -50,19 +50,13 @@ module System.Random.PCG.Class
 #include "MachDeps.h"
 #endif
 
-import           Control.Monad
-import           Data.Bits
-import           Data.Int
-import           Data.Word
-import           Foreign               (allocaBytes, peek)
-import           System.IO
-
-import qualified Control.Exception     as E
-import           Data.IORef            (atomicModifyIORef, newIORef)
-import           Data.Ratio            (numerator, (%))
-import           Data.Time.Clock.POSIX (getPOSIXTime)
-import           System.CPUTime        (cpuTimePrecision, getCPUTime)
-import           System.IO.Unsafe      (unsafePerformIO)
+import Control.Monad
+import Data.Bits
+import Data.ByteString (useAsCString)
+import Data.Int
+import Data.Word
+import Foreign         (castPtr, peek)
+import System.Entropy
 
 class Monad m => Generator g m where
   uniform1 :: (Word32 -> a) -> g -> m a
@@ -422,36 +416,15 @@ wordsToDouble x y  = (fromIntegral u * m_inv_32 + (0.5 + m_inv_53) +
 
 -- IO randoms
 
-devRandom :: IO Word64
-devRandom =
-  allocaBytes 8 $ \buf -> do
-    nread <- withBinaryFile "/dev/urandom" ReadMode $ \h -> hGetBuf h buf 8
-    when (nread /= 8) $ error "unable to read from /dev/urandom"
-    peek buf
-
--- Acquire seed from current time. This is horrible fall-back for
--- Windows system.
-acquireSeedTime :: IO Word64
-acquireSeedTime = do
-  c <- (numerator . (%cpuTimePrecision)) `liftM` getCPUTime
-  t <- toRational `liftM` getPOSIXTime
-  let n    = fromIntegral (numerator t) :: Word64
-  return $ wordsTo64Bit (fromIntegral c) (fromIntegral n)
-
--- | Get a random number from system source. If \"@\/dev\/urandom@\" is
---   not found return inferior random number from time.
+-- | Generate a random number using 'System.Entropy'.
+--
+--   Use RDRAND if available and XOR with @\/dev\/urandom@ on Unix and
+--   CryptAPI on Windows. This entropy is considered cryptographically
+--   secure but not true entropy.
 sysRandom :: IO Word64
-sysRandom =
-  devRandom `E.catch` \(_ :: E.IOException) -> do
-    seen <- atomicModifyIORef warned ((,) True)
-    unless seen $ E.handle (\(_::E.IOException) -> return ()) $ do
-      hPutStrLn stderr ("Warning: Couldn't open /dev/urandom")
-      hPutStrLn stderr ("Warning: using system clock for seed instead " ++
-                        "(quality will be lower)")
-    acquireSeedTime
-  where
-    warned = unsafePerformIO $ newIORef False
-    {-# NOINLINE warned #-}
+sysRandom = do
+  bs <- getEntropy 8
+  useAsCString bs $ peek . castPtr
 
 uniformRange :: ( Generator g m
                 , Integral a, Bounded a, Variate a
