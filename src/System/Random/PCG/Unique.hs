@@ -58,7 +58,9 @@ module System.Random.PCG.Unique
   , uniformBF, uniformBD, uniformBBool
   ) where
 
+#if __GLASGOW_HASKELL__ < 710
 import Data.Functor
+#endif
 import Foreign
 
 import System.Random.PCG.Class

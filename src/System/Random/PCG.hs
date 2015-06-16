@@ -63,9 +63,11 @@ module System.Random.PCG
   , uniformBF, uniformBD, uniformBBool
   ) where
 
-import Data.Data
+#if __GLASGOW_HASKELL__ < 710
 import Control.Applicative
+#endif
 import Control.Monad.Primitive
+import Data.Data
 import Foreign
 import GHC.Generics
 import System.IO.Unsafe
