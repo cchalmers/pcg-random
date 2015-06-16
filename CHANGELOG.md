@@ -1,3 +1,7 @@
+### 0.1.3.1
+
+* Added `withFrozen` function.
+
 ### 0.1.3.0
 
 * Use [entropy](http://hackage.haskell.org/package/entropy) package for
