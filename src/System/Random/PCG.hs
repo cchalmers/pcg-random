@@ -146,7 +146,7 @@ type role Gen representational
 -- | Type alias of 'Gen' specialized to 'IO'.
 type GenIO = Gen RealWorld
 
--- | Type alias of 'Gen' specialized to 'ST'. (
+-- | Type alias of 'Gen' specialized to 'ST'.
 type GenST s = Gen s
 -- Note this doesn't force it to be in ST. You can write (STGen Realworld)
 -- and it'll work in IO. Writing STGen s = Gen (PrimState (ST s)) doesn't
@@ -166,8 +166,8 @@ initialize a b = unsafePrimToPrim $ do
   pcg32_srandom_r p a b
   return (Gen p)
 
--- | Seed with system random number. (\"@\/dev\/urandom@\" on Unix-like
---   systems, time otherwise).
+-- | Seed with system random number. (@\/dev\/urandom@ on Unix-like
+--   systems and CryptAPI on Windows).
 withSystemRandom :: (GenIO -> IO a) -> IO a
 withSystemRandom f = do
   w1 <- sysRandom

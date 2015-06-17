@@ -147,8 +147,8 @@ initialize a = unsafePrimToPrim $ do
   pcg32f_srandom_r p a
   return  (Gen p)
 
--- | Seed with system random number. (\"@\/dev\/urandom@\" on Unix-like
---   systems, time otherwise).
+-- | Seed with system random number. (@\/dev\/urandom@ on Unix-like
+--   systems and CryptAPI on Windows).
 withSystemRandom :: (GenIO -> IO a) -> IO a
 withSystemRandom f = do
   w <- sysRandom
