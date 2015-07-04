@@ -67,14 +67,14 @@ module System.Random.PCG.Pure where
   -- , uniformBF, uniformBD, uniformBBool
   -- ) where
 
-import Control.Monad.Primitive
+-- import Control.Monad.Primitive
 import Data.Bits
 import GHC.Word
-import GHC.Base
-import Data.Functor
-import Data.Primitive.ByteArray
+-- import GHC.Base
+-- import Data.Functor
+-- import Data.Primitive.ByteArray
 
-import System.Random.PCG.Generic
+-- import System.Random.PCG.Generic
 
 -- $setup
 -- >>> import System.Random.PCG.Fast
@@ -127,38 +127,38 @@ next :: SetSeq -> (Word32, SetSeq)
 next g@(SetSeq _ inc) = (r, SetSeq s' inc)
   where Pair s' r = pair g
 
-instance PCG SetSeq where
-  type Result SetSeq = Word32
-  type State SetSeq  = Word64
-  seed = SetSeq 0x853c49e6748fea9b 0xda3e39cb94b95bdb
-  initialize x = start x 0xda3e39cb94b95bdb
-  next g@(SetSeq _ inc) = g' `seq` (r, g')
-    where Pair s' r = pair g
-          g'        = SetSeq s' inc
-  split g@(SetSeq _ inc) = g1 `seq` g2 `seq` (g1, g2)
-    where
-      g1 = start32 w1 w7 w2 w3 -- mix it up
-      g2 = start32 w8 w6 w5 w4
-      Pair s1 w1 = pair g
-      Pair s2 w2 = pair (SetSeq s1 inc)
-      Pair s3 w3 = pair (SetSeq s2 inc)
-      Pair s4 w4 = pair (SetSeq s3 inc)
-      Pair s5 w5 = pair (SetSeq s4 inc)
-      Pair s6 w6 = pair (SetSeq s5 inc)
-      Pair s7 w7 = pair (SetSeq s6 inc)
-      w8 = output s7 -- abandon old state
-  {-# NOINLINE [1] list #-}
-  list (SetSeq s0 inc) = go s0
-    where go s = r : go s'
-            where Pair s' r = pair (SetSeq s inc)
-  bounded b (SetSeq s0 inc) = (rn, SetSeq sn inc)
-    where
-      Pair sn rn = go s0
-      t = negate b `mod` b
-      go s | r >= t    = Pair s' (r `mod` b)
-           | otherwise = go s'
-        where Pair s' r = pair (SetSeq s inc)
-  {- INLINE bounded #-}
+-- instance PCG SetSeq where
+--   type Result SetSeq = Word32
+--   type State SetSeq  = Word64
+--   seed = SetSeq 0x853c49e6748fea9b 0xda3e39cb94b95bdb
+--   initialize x = start x 0xda3e39cb94b95bdb
+--   next g@(SetSeq _ inc) = g' `seq` (r, g')
+--     where Pair s' r = pair g
+--           g'        = SetSeq s' inc
+--   split g@(SetSeq _ inc) = g1 `seq` g2 `seq` (g1, g2)
+--     where
+--       g1 = start32 w1 w7 w2 w3 -- mix it up
+--       g2 = start32 w8 w6 w5 w4
+--       Pair s1 w1 = pair g
+--       Pair s2 w2 = pair (SetSeq s1 inc)
+--       Pair s3 w3 = pair (SetSeq s2 inc)
+--       Pair s4 w4 = pair (SetSeq s3 inc)
+--       Pair s5 w5 = pair (SetSeq s4 inc)
+--       Pair s6 w6 = pair (SetSeq s5 inc)
+--       Pair s7 w7 = pair (SetSeq s6 inc)
+--       w8 = output s7 -- abandon old state
+--   {-# NOINLINE [1] list #-}
+--   list (SetSeq s0 inc) = go s0
+--     where go s = r : go s'
+--             where Pair s' r = pair (SetSeq s inc)
+--   bounded b (SetSeq s0 inc) = (rn, SetSeq sn inc)
+--     where
+--       Pair sn rn = go s0
+--       t = negate b `mod` b
+--       go s | r >= t    = Pair s' (r `mod` b)
+--            | otherwise = go s'
+--         where Pair s' r = pair (SetSeq s inc)
+--   {- INLINE bounded #-}
 
 listFB :: (Word32 -> b -> b) -> SetSeq -> b
 listFB c (SetSeq s0 inc) = go s0
@@ -169,13 +169,13 @@ listFB c (SetSeq s0 inc) = go s0
 {-# NOINLINE [0] listFB #-}
 
 
-{-# RULES
-"next"    [~1] forall s. list s     = build (\c _n -> listFB c s)
-"nextFB"  [1]            listFB (:) = list
- #-}
+-- {-# RULES
+-- "next"    [~1] forall s. list s     = build (\c _n -> listFB c s)
+-- "nextFB"  [1]            listFB (:) = list
+ -- #-}
 
-start32 :: Word32 -> Word32 -> Word32 -> Word32 -> SetSeq
-start32 a b c d = start (wordsTo64Bit a b) (wordsTo64Bit c d)
+-- start32 :: Word32 -> Word32 -> Word32 -> Word32 -> SetSeq
+-- start32 a b c d = start (wordsTo64Bit a b) (wordsTo64Bit c d)
 
 start :: Word64 -> Word64 -> SetSeq
 start a b = SetSeq s i
