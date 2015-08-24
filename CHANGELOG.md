@@ -1,3 +1,7 @@
+### 0.1.3.2
+
+* Added System.Random.PCG.Fast.Pure module.
+
 ### 0.1.3.1
 
 * Added `withFrozen` function.
