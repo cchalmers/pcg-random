@@ -13,7 +13,7 @@
 {-# LANGUAGE RoleAnnotations            #-}
 #endif
 -- |
--- Module     : System.Random.PCG.Fast
+-- Module     : System.Random.PCG.Fast.Pure
 -- Copyright  : Copyright (c) 2015, Christopher Chalmers <c.chalmers@me.com>
 -- License    : BSD3
 -- Maintainer : Christopher Chalmers <c.chalmers@me.com>
@@ -46,8 +46,6 @@ module System.Random.PCG.Fast.Pure
     -- * Getting random numbers
   , Variate (..)
   , advance, retract
-
-  , u1, u2, u3, Pair (..), pair, nxt, bounded, state, output
 
     -- * Seeds
   , FrozenGen, save, restore, seed, initFrozen
@@ -142,28 +140,6 @@ advancing d0 s m0 p0 = go d0 m0 p0 1 0
 
 advanceFast :: Word64 -> FrozenGen -> FrozenGen
 advanceFast d (F s) = F $ advancing d s fastMultiplier 0
-
-nxt :: FrozenGen -> (Word32, FrozenGen)
-nxt (F s) = (w, F s')
-  where
-    P s' w = pair s
-
--- uint64_t pcg_advance_lcg_64(uint64_t state, uint64_t delta, uint64_t cur_mult,
---                             uint64_t cur_plus)
--- {
---     uint64_t acc_mult = 1u;
---     uint64_t acc_plus = 0u;
---     while (delta > 0) {
---         if (delta & 1) {
---             acc_mult *= cur_mult;
---             acc_plus = acc_plus * cur_mult + cur_plus;
---         }
---         cur_plus = (cur_mult + 1) * cur_plus;
---         cur_mult *= cur_mult;
---         delta /= 2;
---     }
---     return acc_mult * state + acc_plus;
--- }
 
 ------------------------------------------------------------------------
 -- Seed
@@ -271,28 +247,6 @@ retract u g = advance (-u) g
 ------------------------------------------------------------------------
 -- Instances
 ------------------------------------------------------------------------
-
-u1 :: GenIO -> IO Word32
-u1 (G !a) = do
-  s <- readByteArray a 0
-  let P s' r = pair s
-  writeByteArray a 0 s'
-  return r
-{-# INLINE u1 #-}
-
-u2 :: GenIO -> IO Word32
-u2 (G a) = do
-  s <- readByteArray a 0
-  let P s' r = pair s
-  writeByteArray a 0 s'
-  return r
-
-u3 :: GenIO -> IO Word32
-u3 (G a) = do
-  s <- readByteArray a 0
-  let P s' r = pair s
-  writeByteArray a 0 s'
-  return $! r
 
 instance (PrimMonad m, s ~ PrimState m) => Generator (Gen s) m where
   uniform1 f (G a) = do
