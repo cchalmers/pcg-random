@@ -18,17 +18,17 @@
 -- License    : BSD3
 -- Maintainer : Christopher Chalmers <c.chalmers@me.com>
 -- Stability  : experimental
--- Portability: CPP, FFI
+-- Portability: CPP
 --
--- Fast variant of the PCG random number generator. This module performs
--- around 20% faster than the multiple streams version but produces slightly
--- lower quality (still good) random numbers.
+-- Experimental pure haskell version of the fast variant of the PCG
+-- random number generator. This module can perform faster than the c
+-- bindings version, especially for parallel code.
 --
 -- See <http://www.pcg-random.org> for details.
 --
 -- @
 -- import Control.Monad.ST
--- import System.Random.PCG.Fast
+-- import System.Random.PCG.Fast.Pure
 --
 -- three :: [Double]
 -- three = runST $ do
@@ -79,6 +79,7 @@ import System.Random.PCG.Class
 newtype FrozenGen = F Word64
   deriving (Show, Eq, Ord, Prim)
 
+-- | State of the random number generator.
 newtype Gen s = G (MutableByteArray s)
 
 type GenIO = Gen RealWorld
@@ -145,11 +146,6 @@ advanceFast d (F s) = F $ advancing d s fastMultiplier 0
 -- Seed
 ------------------------------------------------------------------------
 
--- | Immutable state of a random number generator. Suitable for storing
---   for later use.
--- newtype FrozenGen = FrozenGen Word64
---   deriving (Show, Eq, Ord, Storable, Data, Typeable, Generic)
-
 -- | Save the state of a 'Gen' in a 'Seed'.
 save :: PrimMonad m => Gen (PrimState m) -> m FrozenGen
 save (G a) = readByteArray a 0
@@ -178,20 +174,6 @@ seed = F 0xcafef00dd15ea5e5
 create :: PrimMonad m => m (Gen (PrimState m))
 create = restore seed
 
-------------------------------------------------------------------------
--- Gen
-------------------------------------------------------------------------
-
--- | State of the random number generator
--- newtype Gen s = Gen (MutableByteArray s)
---   deriving (Eq, Ord)
--- #if __GLASGOW_HASKELL__ >= 707
--- type role Gen representational
--- #endif
-
--- type GenIO = Gen RealWorld
--- type GenST = Gen
-
 -- | Initialize a generator a single word.
 --
 --   >>> initialize 0 >>= save
@@ -210,11 +192,6 @@ withSystemRandom f = do
 -- numbers. All the caveats of 'withSystemRandom' apply here as well.
 createSystemRandom :: IO GenIO
 createSystemRandom = withSystemRandom (return :: GenIO -> IO GenIO)
-
--- -- | Generate a uniform 'Word32' bounded by the given bound.
--- uniformB :: PrimMonad m => Word32 -> Gen (PrimState m) -> m Word32
--- uniformB u (Gen p) = unsafePrimToPrim $ pcg32f_boundedrand_r p u
--- {-# INLINE uniformB #-}
 
 -- | Advance the given generator n steps in log(n) time. (Note that a
 --   \"step\" is a single random 32-bit (or less) 'Variate'. Data types
