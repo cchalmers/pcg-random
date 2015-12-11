@@ -5,7 +5,7 @@
 
 Haskell bindings to the PCG random number generator http://www.pcg-random.org.
 
-> PCG is a family of simple fast space-efficient statistically good algorithms for random number generation with better-than-typical cryptographic security
+> PCG is a family of simple fast space-efficient statistically good algorithms for random number generation. Unlike many general-purpose RNGs, they are also hard to predict.
 
 Implements the standard multiple stream generator as well as the fast, single and unique variants.
 
