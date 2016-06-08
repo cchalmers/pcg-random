@@ -426,10 +426,10 @@ sysRandom = do
   bs <- getEntropy 8
   useAsCString bs $ peek . castPtr
 
-uniformRange :: ( Generator g m
-                , Integral a, Bounded a, Variate a
-                , Integral (Unsigned a), Bounded (Unsigned a), Variate (Unsigned a))
-             => (a,a) -> g -> m a
+uniformRange
+  :: (Generator g m, Integral a, Variate a, Integral (Unsigned a),
+      Bounded (Unsigned a), Variate (Unsigned a))
+  => (a,a) -> g -> m a
 uniformRange (x1,x2) g
   | n == 0    = uniform g   -- Abuse overflow in unsigned types
   | otherwise = loop
@@ -437,8 +437,7 @@ uniformRange (x1,x2) g
     -- Allow ranges where x2<x1
     (i, j) | x1 < x2   = (x1, x2)
            | otherwise = (x2, x1)
-    -- (# i, j #) | x1 < x2   = (# x1, x2 #)
-    --            | otherwise = (# x2, x1 #)
+    --
     n       = 1 + sub j i
     buckets = maxBound `div` n
     maxN    = buckets * n
