@@ -35,6 +35,7 @@ source-repository head
 library
   exposed-modules:
     System.Random.PCG
+    System.Random.PCG.Pure
     System.Random.PCG.Class
     System.Random.PCG.Fast
     System.Random.PCG.Fast.Pure
