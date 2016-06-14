@@ -1,5 +1,5 @@
 name:                pcg-random
-version:             0.1.3.2
+version:             0.1.3.3
 synopsis:            Haskell bindings to the PCG random number generator.
 description:
   PCG is a family of simple fast space-efficient statistically good
