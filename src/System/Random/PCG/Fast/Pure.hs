@@ -120,7 +120,7 @@ bounded b s0 = go s0
     go !s | r >= t    = P s' (r `mod` b)
           | otherwise = go s'
       where P s' r = pair s
-{- INLINE bounded #-}
+{-# INLINE bounded #-}
 
 advancing
   :: Word64 -- amount to advance by
@@ -252,6 +252,7 @@ instance RandomGen FrozenGen where
     where
       P s'  w1 = pair s
       P s'' w2 = pair s'
+  {-# INLINE next #-}
 
   split (F s) = (mk w1 w2, mk w3 w4)
     where
@@ -260,4 +261,5 @@ instance RandomGen FrozenGen where
       P s2 w2 = pair s1
       P s3 w3 = pair s2
       w4 = output s3 -- abandon old state
+  {-# INLINE split #-}
 
