@@ -204,7 +204,7 @@ next' g@(SetSeq _ inc) = (r, SetSeq s' inc)
 save :: PrimMonad m => Gen (PrimState m) -> m SetSeq
 save (G a) = do
   s   <- readByteArray a 0
-  inc <- readByteArray a 8
+  inc <- readByteArray a 1
   return $ SetSeq s inc
 {-# INLINE save #-}
 
@@ -213,7 +213,7 @@ restore :: PrimMonad m => FrozenGen -> m (Gen (PrimState m))
 restore (SetSeq s inc) = do
   a <- newByteArray 16
   writeByteArray a 0 s
-  writeByteArray a 8 inc
+  writeByteArray a 1 inc
   return $! G a
 {-# INLINE restore #-}
 
@@ -283,14 +283,14 @@ retract u g = advance (-u) g
 instance (PrimMonad m, s ~ PrimState m) => Generator (Gen s) m where
   uniform1 f (G a) = do
     s   <- readByteArray a 0
-    inc <- readByteArray a 8
+    inc <- readByteArray a 1
     writeByteArray a 0 $! s * multiplier + inc
     return $! f (output s)
   {-# INLINE uniform1 #-}
 
   uniform2 f (G a) = do
     s   <- readByteArray a 0
-    inc <- readByteArray a 8
+    inc <- readByteArray a 1
     let !s' = s * multiplier + inc
     writeByteArray a 0 $! s' * multiplier + inc
     return $! f (output s) (output s')
