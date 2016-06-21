@@ -1,3 +1,7 @@
+### 0.1.3.4
+
+* Fix byte array bugs in System.Random.PCG.Pure
+
 ### 0.1.3.3
 
 * Added System.Random.PCG.Pure module.
