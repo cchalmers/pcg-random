@@ -107,8 +107,11 @@ instance Storable SetSeq where
   poke ptr (SetSeq x y) = poke ptr' x >> pokeElemOff ptr' 1 y
     where ptr' = castPtr ptr
   {-# INLINE poke #-}
-  peek ptr = SetSeq <$> peek ptr' <*> peekElemOff ptr' 1
-    where ptr' = castPtr ptr
+  peek ptr = do
+    let ptr' = castPtr ptr
+    s <- peek ptr'
+    inc <- peekElemOff ptr' 1
+    return $ SetSeq s inc
   {-# INLINE peek #-}
 
 -- | Fixed seed.
@@ -199,7 +202,10 @@ next' g@(SetSeq _ inc) = (r, SetSeq s' inc)
 
 -- | Save the state of a 'Gen' in a 'Seed'.
 save :: PrimMonad m => Gen (PrimState m) -> m SetSeq
-save (G a) = SetSeq <$> readByteArray a 0 <*> readByteArray a 8
+save (G a) = do
+  s   <- readByteArray a 0
+  inc <- readByteArray a 8
+  return $ SetSeq s inc
 {-# INLINE save #-}
 
 -- | Restore a 'Gen' from a 'Seed'.
