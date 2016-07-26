@@ -69,18 +69,21 @@ module System.Random.PCG.Fast.Pure
 
 import Control.Monad.Primitive
 import Data.Bits
+import Data.Data
 import Data.Primitive.ByteArray
 import Data.Primitive.Types
+import GHC.Generics
 import GHC.Word
 
 import System.Random
 import System.Random.PCG.Class
 
 newtype FrozenGen = F Word64
-  deriving (Show, Eq, Ord, Prim)
+  deriving (Show, Eq, Ord, Prim, Typeable, Data, Generic)
 
 -- | State of the random number generator.
 newtype Gen s = G (MutableByteArray s)
+  deriving Typeable
 
 type GenIO = Gen RealWorld
 type GenST = Gen
