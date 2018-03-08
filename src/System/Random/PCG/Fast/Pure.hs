@@ -8,6 +8,9 @@
 {-# LANGUAGE MagicHash                  #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE TypeFamilies               #-}
+#if __GLASGOW_HASKELL__ >= 801
+{-# LANGUAGE TypeInType                 #-}
+#endif
 {-# LANGUAGE UnboxedTuples              #-}
 #if __GLASGOW_HASKELL__ >= 707
 {-# LANGUAGE RoleAnnotations            #-}
