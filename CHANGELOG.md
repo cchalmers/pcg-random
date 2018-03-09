@@ -1,3 +1,7 @@
+### 0.1.3.5
+
+* Build with ghc-8.4
+
 ### 0.1.3.4
 
 * Fix byte array bugs in System.Random.PCG.Pure
