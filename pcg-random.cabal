@@ -75,4 +75,5 @@ test-suite doctests
   hs-source-dirs:   test
   build-depends:
     base,
-    doctest
+    doctest,
+    pcg-random
