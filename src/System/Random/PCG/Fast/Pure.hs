@@ -168,7 +168,7 @@ restore f = do
 -- | Generate a new seed using single 'Word64'.
 --
 --   >>> initFrozen 0
---   FrozenGen 1
+--   F 1
 initFrozen :: Word64 -> FrozenGen
 initFrozen w = F (w .|. 1)
 
@@ -183,7 +183,7 @@ create = restore seed
 -- | Initialize a generator a single word.
 --
 --   >>> initialize 0 >>= save
---   FrozenGen 1
+--   F 1
 initialize :: PrimMonad m => Word64 -> m (Gen (PrimState m))
 initialize a = restore (initFrozen a)
 
