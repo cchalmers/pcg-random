@@ -25,8 +25,14 @@ Homepage:            http://github.com/cchalmers/pcg-random
 Bug-reports:         http://github.com/cchalmers/pcg-random/issues
 copyright:           (c) 2014-2015. Christopher Chalmers <c.chalmers@me.com>
 category:            System
-build-type:          Simple
+build-type:          Custom
 cabal-version:       >=1.10
+
+custom-setup
+ setup-depends:
+   base >= 4 && <5,
+   Cabal,
+   cabal-doctest >= 1 && <1.1
 
 source-repository head
   type:     git
@@ -75,4 +81,5 @@ test-suite doctests
   hs-source-dirs:   test
   build-depends:
     base,
-    doctest
+    doctest,
+    pcg-random
