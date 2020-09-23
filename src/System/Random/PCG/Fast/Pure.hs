@@ -92,8 +92,7 @@ type GenIO = Gen RealWorld
 type GenST = Gen
 
 -- $setup
--- >>> import System.Random.PCG.Fast.Pure
--- >>> import System.Random.PCG.Class
+-- >>> import System.Random.PCG.Fast.Pure as Fast.Pure
 -- >>> import Control.Monad
 
 -- internals -----------------------------------------------------------
@@ -167,7 +166,7 @@ restore f = do
 
 -- | Generate a new seed using single 'Word64'.
 --
---   >>> initFrozen 0
+--   >>> Fast.Pure.initFrozen 0
 --   F 1
 initFrozen :: Word64 -> FrozenGen
 initFrozen w = F (w .|. 1)
@@ -182,7 +181,7 @@ create = restore seed
 
 -- | Initialize a generator a single word.
 --
---   >>> initialize 0 >>= save
+--   >>> Fast.Pure.initialize 0 >>= Fast.Pure.save
 --   F 1
 initialize :: PrimMonad m => Word64 -> m (Gen (PrimState m))
 initialize a = restore (initFrozen a)
@@ -203,11 +202,11 @@ createSystemRandom = withSystemRandom (return :: GenIO -> IO GenIO)
 --   \"step\" is a single random 32-bit (or less) 'Variate'. Data types
 --   such as 'Double' or 'Word64' require two \"steps\".)
 --
---   >>> create >>= \g -> replicateM_ 1000 (uniformW32 g) >> uniformW32 g
+--   >>> Fast.Pure.create >>= \g -> replicateM_ 1000 (uniformW32 g) >> uniformW32 g
 --   3725702568
---   >>> create >>= \g -> replicateM_ 500 (uniformD g) >> uniformW32 g
+--   >>> Fast.Pure.create >>= \g -> replicateM_ 500 (uniformD g) >> uniformW32 g
 --   3725702568
---   >>> create >>= \g -> advance 1000 g >> uniformW32 g
+--   >>> Fast.Pure.create >>= \g -> Fast.Pure.advance 1000 g >> uniformW32 g
 --   3725702568
 advance :: PrimMonad m => Word64 -> Gen (PrimState m) -> m ()
 advance u (G a) = do
@@ -219,9 +218,9 @@ advance u (G a) = do
 -- | Retract the given generator n steps in log(2^64-n) time. This
 --   is just @advance (-n)@.
 --
---   >>> create >>= \g -> replicateM 3 (uniformW32 g)
+--   >>> Fast.Pure.create >>= \g -> replicateM 3 (uniformW32 g)
 --   [2951688802,2698927131,361549788]
---   >>> create >>= \g -> retract 1 g >> replicateM 3 (uniformW32 g)
+--   >>> Fast.Pure.create >>= \g -> Fast.Pure.retract 1 g >> replicateM 3 (uniformW32 g)
 --   [954135925,2951688802,2698927131]
 retract :: PrimMonad m => Word64 -> Gen (PrimState m) -> m ()
 retract u g = advance (-u) g
@@ -268,4 +267,3 @@ instance RandomGen FrozenGen where
       P s3 w3 = pair s2
       w4 = output s3 -- abandon old state
   {-# INLINE split #-}
-
