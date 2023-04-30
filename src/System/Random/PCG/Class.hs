@@ -50,6 +50,7 @@ module System.Random.PCG.Class
 #include "MachDeps.h"
 #endif
 
+import qualified Data.Kind
 import Control.Monad
 import Data.Bits
 import Data.ByteString (useAsCString)
@@ -449,7 +450,7 @@ uniformRange (x1,x2) g
 -- Type family for fixed size integrals. For signed data types it's
 -- its unsigned couterpart with same size and for unsigned data types
 -- it's same type
-type family Unsigned a :: *
+type family Unsigned a :: Data.Kind.Type
 
 type instance Unsigned Int8  = Word8
 type instance Unsigned Int16 = Word16
