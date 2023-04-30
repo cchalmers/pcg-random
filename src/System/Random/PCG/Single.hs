@@ -221,7 +221,7 @@ instance (PrimMonad m, s ~ PrimState m) => Generator (Gen s) m where
 
 
 instance RandomGen FrozenGen where
-  next s = unsafeDupablePerformIO $ do
+  genWord64 s = unsafeDupablePerformIO $ do
     p <- malloc
     poke p s
     w1 <- pcg32s_random_r p
@@ -229,7 +229,7 @@ instance RandomGen FrozenGen where
     s' <- peek p
     free p
     return (wordsTo64Bit w1 w2, s')
-  {-# INLINE next #-}
+  {-# INLINE genWord64 #-}
 
   split s = unsafeDupablePerformIO $ do
     p  <- malloc

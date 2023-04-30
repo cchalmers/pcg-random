@@ -303,11 +303,11 @@ instance (PrimMonad m, s ~ PrimState m) => Generator (Gen s) m where
   {-# INLINE uniform1B #-}
 
 instance RandomGen FrozenGen where
-  next (SetSeq s inc) = (wordsTo64Bit w1 w2, SetSeq s'' inc)
+  genWord64 (SetSeq s inc) = (wordsTo64Bit w1 w2, SetSeq s'' inc)
     where
       Pair s'  w1 = pair (SetSeq s inc)
       Pair s'' w2 = pair (SetSeq s' inc)
-  {-# INLINE next #-}
+  {-# INLINE genWord64 #-}
 
   split (SetSeq s inc) = (SetSeq s4 inc, mk w1 w2 w3 w4)
     where
