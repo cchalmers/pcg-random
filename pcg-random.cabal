@@ -52,7 +52,7 @@ library
   other-extensions:    BangPatterns, CPP, ForeignFunctionInterface
   build-depends:
     base        >=4.3 && < 5,
-    primitive   >=0.7 && < 0.9,
+    primitive   >=0.7 && < 0.10,
     random      >=1.2 && < 2.0,
     bytestring,
     entropy
